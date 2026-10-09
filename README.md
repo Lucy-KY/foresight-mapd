@@ -135,7 +135,8 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 - [x] Small-warehouse map (Ma et al., 2017) and narrow-corridor map
 - [x] Task stream generator, agent start locations, well-formedness check
 - [ ] Simulator loop
-- [ ] Collision checker and metrics
+- [x] Collision checker
+- [ ] Metrics
 - [ ] Space-time A* with pluggable cost
 - [ ] TP reproduction, validated against the trends in Ma et al. (2017)
 - [ ] M1 Highway-TP and M2 Heatmap-TP
