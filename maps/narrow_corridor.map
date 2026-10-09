@@ -1,0 +1,29 @@
+# Narrow-corridor stress map (our design), same 21 x 35 footprint and side
+# columns as warehouse_small.map.
+# Differences from warehouse_small.map:
+#  - no middle cross-aisle: each 3-row shelf band spans columns 7-27, so every
+#    horizontal aisle is a 21-cell single-lane corridor entered only at its ends;
+#  - task endpoints are pockets cut into the shelf faces (every other column),
+#    so agents can no longer use the endpoint rows as extra lanes.
+# e: 110 task endpoints. r: 152 candidate agent start cells.
+...................................
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.@@@@@@@@@@@@@@@@@@@@@.rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.@@@@@@@@@@@@@@@@@@@@@.rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.@@@@@@@@@@@@@@@@@@@@@.rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.@@@@@@@@@@@@@@@@@@@@@.rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+.rr.rr.@@@@@@@@@@@@@@@@@@@@@.rr.rr.
+.rr.rr.e@e@e@e@e@e@e@e@e@e@e.rr.rr.
+...................................
