@@ -1,0 +1,27 @@
+# Small simulated warehouse of Ma et al. (AAMAS 2017), Figure 4: 21 x 35, 4-neighbor.
+# Reconstructed cell by cell from the figure.
+# e: 200 task endpoints, the rows directly above and below each shelf strip.
+# r: 152 candidate agent start cells, the four side columns on each side.
+#    Following the paper, only the cells actually used as start locations are
+#    non-task endpoints (see foresight/sim/instance.py).
+...................................
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.@@@@@@@@@@.@@@@@@@@@@.rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.@@@@@@@@@@.@@@@@@@@@@.rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.@@@@@@@@@@.@@@@@@@@@@.rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.@@@@@@@@@@.@@@@@@@@@@.rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.......................rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+.rr.rr.@@@@@@@@@@.@@@@@@@@@@.rr.rr.
+.rr.rr.eeeeeeeeee.eeeeeeeeee.rr.rr.
+...................................

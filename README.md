@@ -132,7 +132,9 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 
 - [x] Shared interfaces and repository skeleton
 - [x] Grid map loader
-- [ ] Task stream generator and simulator loop
+- [x] Small-warehouse map (Ma et al., 2017) and narrow-corridor map
+- [x] Task stream generator, agent start locations, well-formedness check
+- [ ] Simulator loop
 - [ ] Collision checker and metrics
 - [ ] Space-time A* with pluggable cost
 - [ ] TP reproduction, validated against the trends in Ma et al. (2017)
