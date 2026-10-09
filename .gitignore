@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+build/
+dist/
+
+# Experiment outputs: commit only final summaries under results/summary/
+results/*
+!results/.gitkeep
+!results/summary/
+
+# Media
+*.gif
+*.mp4
+!docs/media/*.gif
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/

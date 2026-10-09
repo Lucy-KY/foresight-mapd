@@ -1,0 +1,7 @@
+# Small corridor map for unit tests.
+# .=free  @=obstacle  e=task endpoint  r=home
+r.......r
+.@@@.@@@.
+e...e...e
+.@@@.@@@.
+r.......r

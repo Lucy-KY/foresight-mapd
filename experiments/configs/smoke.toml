@@ -1,0 +1,19 @@
+# Tiny configuration to check that the pipeline runs end to end.
+
+map = "maps/toy_corridor.map"
+n_tasks = 20
+agents = [2, 4]
+arrival_rates = [0.2]
+seeds = [0, 1]
+
+[methods.tp]
+
+[methods.foresight_st]
+lam = 1.0
+delta = 2
+
+[methods.foresight_std]
+lam = 1.0
+delta = 2
+mu = 1.0
+delta_dir = 2

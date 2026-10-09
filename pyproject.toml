@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "foresight-mapd"
+version = "0.1.0"
+description = "Forward-looking congestion maps for lifelong multi-agent pickup and delivery"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Yiyang Sun" },
+    { name = "Kaiyuan Xu" },
+    { name = "Sicheng Yu" },
+]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+    "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["foresight*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
