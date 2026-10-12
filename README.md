@@ -95,6 +95,20 @@ List the jobs in an experiment config without running them:
 python experiments/run.py experiments/configs/smoke.toml --out results/smoke.csv --dry-run
 ```
 
+Run a batch on 4 worker processes (re-running skips finished jobs and retries failed ones; `--limit N` times a few jobs first):
+
+```bash
+python experiments/run.py experiments/configs/smoke.toml --out results/smoke.csv --jobs 4
+```
+
+Simulate one run and save it as a GIF plus a visit heatmap:
+
+```bash
+python experiments/visualize.py --map maps/warehouse_small.map --planner stub --agents 10 --tasks 30 --out results/demo
+```
+
+Config format and the tuning / test seed split: [`experiments/configs/README.md`](experiments/configs/README.md).
+
 ## Adding a method
 
 Implement the `CostModel` protocol in `foresight/interfaces.py`, usually by
@@ -135,6 +149,7 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 - [x] Small-warehouse map (Ma et al., 2017) and narrow-corridor map
 - [x] Task stream generator, agent start locations, well-formedness check
 - [x] Simulator loop (tested with stub planners)
+- [x] Batch runner (parallel, resumable CSV) and GIF / heatmap visualization
 - [x] Collision checker
 - [ ] Metrics
 - [x] Space-time A* with pluggable cost
