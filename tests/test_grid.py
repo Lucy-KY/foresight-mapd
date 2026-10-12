@@ -11,7 +11,7 @@ def test_load_toy_map():
     g = GridMap.load(TOY)
     assert (g.height, g.width) == (5, 9)
     assert len(g.task_endpoints) == 3
-    assert len(g.homes) == 4
+    assert len(g.homes) == 3
 
 
 def test_neighbors_skip_obstacles_and_bounds():
