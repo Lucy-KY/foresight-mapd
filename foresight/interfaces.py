@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Iterator, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from foresight.sim.instance import MapdInstance
 
 Cell = tuple[int, int]
 """A grid cell as (row, col)."""
@@ -62,6 +65,29 @@ class AgentStatus(Enum):
     TO_DELIVERY = "to_delivery"
 
 
+@dataclass(frozen=True)
+class AgentState:
+    """Read-only snapshot of one agent at timestep t.
+
+    The simulator owns and updates it; planners only read it and hand their
+    choices back as ``Decision``s. ``pickup_time`` is when ``path`` reaches
+    ``task.pickup``: a path may pass the pickup cell before it actually
+    picks up, so the simulator cannot infer it from the cells.
+    """
+
+    agent_id: int
+    location: Cell
+    status: AgentStatus
+    task: Task | None
+    path: Path
+    pickup_time: Timestep | None
+
+    def at_path_end(self, t: Timestep) -> bool:
+        """True once the agent has executed its whole path; in TP only these
+        agents request the token."""
+        return t >= self.path.end_time
+
+
 @runtime_checkable
 class CostModel(Protocol):
     """Step cost used by the space-time A* planner.
@@ -91,4 +117,43 @@ class CostModel(Protocol):
 
     def on_timestep(self, t: Timestep, positions: dict[int, Cell]) -> None:
         """Called once per simulated timestep with every agent's position."""
+        ...
+
+
+@dataclass(frozen=True)
+class Decision:
+    """A planner's choice for one agent at timestep t.
+
+    It replaces the agent's current path and task. ``path`` must start at
+    t from the agent's location and end at an endpoint. With a task, the
+    path must reach ``task.pickup`` at ``pickup_time`` and end at
+    ``task.delivery``; ``task=None`` means only moving to (or staying at) an
+    endpoint, which also gives up any task the agent had not picked up yet.
+    """
+
+    agent_id: int
+    path: Path
+    task: Task | None = None
+    pickup_time: Timestep | None = None
+
+
+@runtime_checkable
+class Planner(Protocol):
+    """Task assignment plus path planning, called once per timestep.
+
+    The planner keeps the token itself and forwards commits and releases to
+    the cost model. The simulator keeps track of which task belongs to
+    whom: a task no agent holds any more goes back to ``open_tasks``.
+    """
+
+    def reset(self, instance: MapdInstance, cost_model: CostModel) -> None:
+        """Start a new run."""
+        ...
+
+    def step(
+        self, t: Timestep, agents: list[AgentState], open_tasks: list[Task]
+    ) -> list[Decision]:
+        """Return decisions for any agents at t, in the order they were
+        committed. ``agents`` covers every agent; ``open_tasks`` are released
+        and unassigned, sorted by ``task_id``."""
         ...

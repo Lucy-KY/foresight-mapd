@@ -1,7 +1,8 @@
-# Small corridor map for unit tests.
+# Small corridor map for unit tests. Every endpoint is a pocket off a free
+# corridor, so the map is well-formed for up to 3 agents.
 # .=free  @=obstacle  e=task endpoint  r=home
-r.......r
-.@@@.@@@.
-e...e...e
-.@@@.@@@.
-r.......r
+.........
+.@r@e@r@.
+.........
+.@e@r@e@.
+.........

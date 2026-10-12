@@ -5,9 +5,9 @@ Owner: member 2.
 
 from __future__ import annotations
 
-from foresight.interfaces import CostModel
+from foresight.interfaces import AgentState, CostModel, Decision, Task, Timestep
 from foresight.planner.token import Token
-from foresight.sim.grid import GridMap
+from foresight.sim.instance import MapdInstance
 
 
 class TokenPassing:
@@ -20,13 +20,17 @@ class TokenPassing:
     against the paths already in the token and then fixed.
 
     The planner is identical for every method; only ``cost_model`` changes.
+    Implements the ``Planner`` protocol in ``foresight/interfaces.py``.
     """
 
-    def __init__(self, grid: GridMap, cost_model: CostModel) -> None:
-        self.grid = grid
+    def reset(self, instance: MapdInstance, cost_model: CostModel) -> None:
+        self.instance = instance
+        self.grid = instance.grid
+        self.endpoints = instance.endpoints
         self.cost_model = cost_model
         self.token = Token(cost_model)
 
-    def step(self, t, agents, open_tasks) -> None:
-        """Assign tasks and plan paths for every agent that needs one at t."""
+    def step(self, t: Timestep, agents: list[AgentState], open_tasks: list[Task]) -> list[Decision]:
+        """Agents with ``agent.at_path_end(t)`` request the token one after
+        another; return one ``Decision`` per agent that got a new path."""
         raise NotImplementedError

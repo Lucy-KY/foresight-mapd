@@ -2,7 +2,7 @@
 
 | File | Size | Task endpoints | Start cells | Purpose |
 |---|---|---|---|---|
-| `toy_corridor.map` | 5 x 9 | 3 | 4 | Tiny map for unit tests |
+| `toy_corridor.map` | 5 x 9 | 3 | 3 | Tiny map for unit tests (well-formed for up to 3 agents) |
 | `warehouse_small.map` | 21 x 35 | 200 | 152 | Small simulated warehouse of Ma et al. (2017), Figure 4 |
 | `narrow_corridor.map` | 21 x 35 | 110 | 152 | Our stress-test map with single-lane aisles |
 

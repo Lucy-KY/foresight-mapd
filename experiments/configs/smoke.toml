@@ -2,7 +2,7 @@
 
 map = "maps/toy_corridor.map"
 n_tasks = 20
-agents = [2, 4]
+agents = [2, 3]
 arrival_rates = [0.2]
 seeds = [0, 1]
 
