@@ -1,0 +1,5 @@
+{
+  "description": "M1 highway for warehouse_small.map. Horizontal aisles alternate west/east; vertical aisles mirror each other around the center column. The outer ring circulates counterclockwise (top W, left S, bottom E, right N). Shelf-face endpoint rows and the agent start columns have no direction.",
+  "rows": {"0": "W", "4": "E", "8": "W", "12": "E", "16": "W", "20": "E"},
+  "cols": {"0": "S", "3": "N", "6": "S", "17": "N", "28": "N", "31": "S", "34": "N"}
+}
