@@ -41,5 +41,13 @@ In `warehouse_small.map` each aisle is effectively three cells wide, because
 agents may walk along the endpoint rows. The narrow map removes that slack,
 which is where head-on encounters should matter most.
 
+**Highways (`*.highway.json`)** are the offline one-way lane designs used
+by M1 (`foresight/costs/highway.py`). Each file lists whole rows and
+columns with a compass direction (`N`/`S`/`E`/`W`); every passable cell on
+them gets that direction. Both maps use the same design: horizontal aisles
+alternate west/east, the vertical aisles mirror each other around the
+center, and the outer ring circulates counterclockwise. Endpoint rows and
+start columns have no direction, so moving there or crossing a lane costs 1.
+
 Both maps are well-formed for up to 152 agents; `tests/test_maps.py` checks
 this.

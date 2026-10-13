@@ -12,7 +12,7 @@ seeds = [0, 1, 2]
 
 [methods.highway]
 w_h = 1.5
-# TODO (member 2): highway directions for warehouse_small.map
+# One-way lanes; see maps/README.md
 directions = "maps/warehouse_small.highway.json"
 
 [methods.foresight]
