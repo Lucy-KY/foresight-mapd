@@ -78,6 +78,10 @@ class Token:
         """Cells where agents' committed paths end (they park there)."""
         return {c for c, a in self._parked.items() if a != exclude}
 
+    def end_owners(self) -> dict[Cell, int]:
+        """``cell -> agent`` for the cell each agent's committed path ends in."""
+        return dict(self._parked)
+
     def _index(self, path: Path) -> None:
         a = path.agent_id
         for k, cell in enumerate(path.cells):
