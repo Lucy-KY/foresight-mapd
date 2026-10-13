@@ -71,8 +71,9 @@ class TokenPassing:
         return self._plan_to_free_endpoint(t, i, loc, tasks, ends)
 
     def _plan_task(self, t: Timestep, i: int, loc: Cell, task: Task) -> Decision | None:
-        """Path1: current location -> pickup -> delivery, parking at the delivery."""
-        old = self.token.paths[i]
+        """Path1: current location -> pickup -> delivery, parking at the delivery.
+        On failure the agent's previous path (if any) is put back."""
+        old = self.token.paths.get(i)
         self.token.release(i)
         to_pickup = self._astar(i, loc, task.pickup, t, park=False)
         if to_pickup is not None:
@@ -82,7 +83,8 @@ class TokenPassing:
                 path = Path(i, t, to_pickup.cells + to_delivery.cells[1:])
                 self.token.commit(path)
                 return Decision(i, path, task, pickup_time)
-        self.token.commit(old)
+        if old is not None:
+            self.token.commit(old)
         return None
 
     def _plan_to_free_endpoint(
@@ -94,14 +96,15 @@ class TokenPassing:
         free = [e for e in self.endpoints if e != loc and e not in deliveries and e not in ends]
         free = [e for e in free if self.dist(loc, e) is not None]
         free.sort(key=lambda e: (self.dist(loc, e), e))
-        old = self.token.paths[i]
+        old = self.token.paths.get(i)
         self.token.release(i)
         for e in free:
             path = self._astar(i, loc, e, t, park=True)
             if path is not None:
                 self.token.commit(path)
                 return Decision(i, path)
-        self.token.commit(old)
+        if old is not None:
+            self.token.commit(old)
         return None
 
     def _astar(self, i: int, start: Cell, goal: Cell, t: Timestep, park: bool) -> Path | None:
