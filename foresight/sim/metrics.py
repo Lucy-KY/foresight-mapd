@@ -59,6 +59,7 @@ class RunResult:
     total_path_cost: int | None = None
     wait_fraction: float | None = None
     head_on_encounters: int | None = None
+    head_on_per_task: float | None = None
     visit_gini: float | None = None
     visit_max: int | None = None
     plan_time_mean_ms: float | None = None
@@ -147,15 +148,51 @@ def cell_entries(paths: list[Path]) -> Counter[Cell]:
     return entries
 
 
-def count_head_on_encounters(paths: list[Path]) -> int:
-    """Count head-on encounters between agents.
+def count_head_on_encounters(grid: GridMap, paths: list[Path]) -> int:
+    """Count head-on encounters, with the rule the team agreed on in the PRD
+    ("对向相遇判定规则").
 
-    TODO: implement once member 3 confirms the rule drafted in the PRD
-    ("对向相遇判定规则"): same row or column, 1-2 cells apart, nothing in
-    between, both moved towards each other in the last step; count onsets
-    only.
+    Agents i and j have a head-on encounter at timestep t when:
+      1. they are in the same row or column, 1 or 2 cells apart;
+      2. the cell between them (if any) is passable and empty at t;
+      3. both moved one cell along that line towards each other from t - 1
+         to t;
+      4. the pair did not already meet conditions 1-3 at t - 1 (each
+         encounter counts once, at its start).
+
+    No "someone yields afterwards" condition is needed: collision-free paths
+    cannot both keep going, so one of them must wait, back off or turn. A
+    parked agent blocking a corridor is not counted here.
     """
-    raise NotImplementedError
+    if not paths:
+        return 0
+    horizon = max(p.end_time for p in paths)
+    count = 0
+    previous: set[tuple[int, int]] = set()
+    for t in range(1, horizon + 1):
+        here = {p.agent_id: p.at(t) for p in paths}
+        occupant = {cell: a for a, cell in here.items()}
+        step = {}
+        for p in paths:
+            (r0, c0), (r1, c1) = p.at(t - 1), here[p.agent_id]
+            if (r0, c0) != (r1, c1):
+                step[p.agent_id] = (r1 - r0, c1 - c0)
+
+        current = set()
+        for i, (dr, dc) in step.items():
+            r, c = here[i]
+            for gap in (1, 2):
+                j = occupant.get((r + gap * dr, c + gap * dc))
+                if j is None:
+                    continue
+                if step.get(j) == (-dr, -dc):
+                    middle = (r + dr, c + dc)
+                    if gap == 1 or (grid.passable(middle) and middle not in occupant):
+                        current.add((min(i, j), max(i, j)))
+                break  # the nearest agent ahead blocks the line of sight
+        count += len(current - previous)
+        previous = current
+    return count
 
 
 def fill_metrics(
@@ -187,6 +224,10 @@ def fill_metrics(
         actions, waits = busy_actions(paths, records)
         result.total_path_cost = actions
         result.wait_fraction = waits / actions if actions else 0.0
+
+    result.head_on_encounters = count_head_on_encounters(grid, paths)
+    if records:
+        result.head_on_per_task = result.head_on_encounters / len(records)
 
     entries = cell_entries(paths)
     passable = [(r, c) for r in range(grid.height) for c in range(grid.width) if grid.passable((r, c))]

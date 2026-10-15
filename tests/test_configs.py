@@ -39,5 +39,5 @@ def test_tuning_and_test_seeds_are_separate(config_path):
 
 def test_midterm_config_is_27_runs_per_method():
     jobs = expand(load(ROOT / "experiments" / "configs" / "ma2017_midterm.toml"))
-    assert {j["method"] for j in jobs} == {"tp", "highway", "foresight", "foresight_st"}
+    assert {j["method"] for j in jobs} == {"tp", "highway", "foresight", "foresight_st", "foresight_std"}
     assert len([j for j in jobs if j["method"] == "tp"]) == 27
