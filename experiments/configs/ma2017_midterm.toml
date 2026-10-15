@@ -1,7 +1,7 @@
 # Small subset of ma2017_small.toml for the mid-term (Oct 20) preliminary
 # results: 3 agent counts x 3 task frequencies x 3 seeds = 27 runs per method
-# for M0, M1, M3, M4 and M5.
-# Parameters are first guesses; proper tuning happens after the mid-term.
+# for M0-M5 on warehouse_small. M1 / M2 use the parameters tuned in
+# results/summary/baseline_tuning.md; M3-M5 are first guesses (tuned after the mid-term).
 
 map = "maps/warehouse_small.map"
 n_tasks = 500
@@ -15,6 +15,10 @@ seeds = [0, 1, 2]
 w_h = 1.5
 # One-way lanes; see maps/README.md
 directions = "maps/warehouse_small.highway.json"
+
+[methods.heatmap]
+lam = 1.0
+eta = 0.99
 
 [methods.foresight]
 lam = 1.0
