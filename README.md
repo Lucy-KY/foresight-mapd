@@ -140,9 +140,9 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 - [x] Space-time A* with pluggable cost
 - [x] TP reproduction, validated against the trends in Ma et al. (2017)
 - [x] M1 Highway-TP and M2 Heatmap-TP
-- [ ] Reservation table and M3 Foresight
-- [ ] M4 Foresight-ST and M5 Foresight-STD
-- [ ] λ = μ = 0 consistency test enabled
+- [x] Reservation table and M3 Foresight
+- [x] M4 Foresight-ST and M5 Foresight-STD
+- [x] λ = μ = 0 consistency test enabled
 - [ ] Parameter tuning, main experiments and ablations
 - [x] Optional: TPTS
 - [ ] Optional: congestion-aware task assignment
