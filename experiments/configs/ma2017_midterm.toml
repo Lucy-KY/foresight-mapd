@@ -1,5 +1,6 @@
 # Small subset of ma2017_small.toml for the mid-term (Oct 20) preliminary
-# results: 3 agent counts x 3 task frequencies x 3 seeds = 27 runs per method.
+# results: 3 agent counts x 3 task frequencies x 3 seeds = 27 runs per method
+# for M0, M1, M3, M4 and M5.
 # Parameters are first guesses; proper tuning happens after the mid-term.
 
 map = "maps/warehouse_small.map"
@@ -22,3 +23,9 @@ window = 5
 [methods.foresight_st]
 lam = 1.0
 delta = 2
+
+[methods.foresight_std]
+lam = 1.0
+delta = 2
+mu = 1.0
+delta_dir = 2

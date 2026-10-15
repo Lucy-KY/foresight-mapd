@@ -9,6 +9,7 @@ from foresight.sim.metrics import (
     TaskRecord,
     busy_actions,
     cell_entries,
+    count_head_on_encounters,
     fill_metrics,
     gini,
     makespan,
@@ -107,6 +108,7 @@ def test_fill_metrics_on_a_two_agent_run():
     assert 0 < result.visit_gini < 1  # 4 of 12 cells entered once
     assert result.plan_time_mean_ms == 2.0 and result.plan_time_max_ms == 3.0
     assert result.n_conflicts == 0
+    assert result.head_on_encounters == 0 and result.head_on_per_task == 0.0
 
 
 def test_fill_metrics_flags_incomplete_runs_and_conflicts():
@@ -125,3 +127,62 @@ def test_to_row_flattens_params():
     result = RunResult(method="foresight", map_name="m", n_agents=1, arrival_rate=1, seed=0, params={"lam": 1.0})
     row = result.to_row()
     assert row["param_lam"] == 1.0 and "params" not in row
+
+
+# Head-on encounters, rule from the PRD ("对向相遇判定规则"). Row 2 has a wall at (2, 2).
+LINE = GridMap.from_lines(["......", "......", "..@..."])
+
+
+def head_on(*trajectories):
+    return count_head_on_encounters(LINE, [path(i, cells) for i, cells in enumerate(trajectories)])
+
+
+def test_head_on_two_apart():
+    assert head_on([(0, 0), (0, 1)], [(0, 4), (0, 3)]) == 1
+
+
+def test_head_on_adjacent():
+    assert head_on([(0, 1), (0, 2)], [(0, 4), (0, 3)]) == 1
+
+
+def test_head_on_works_in_columns_too():
+    tall = GridMap.from_lines([".", ".", ".", ".", "."])
+    paths = [path(0, [(0, 0), (1, 0)]), path(1, [(4, 0), (3, 0)])]
+    assert count_head_on_encounters(tall, paths) == 1
+
+
+def test_following_is_not_head_on():
+    assert head_on([(0, 0), (0, 1)], [(0, 2), (0, 3)]) == 0
+
+
+def test_perpendicular_is_not_head_on():
+    assert head_on([(1, 0), (1, 1)], [(0, 2), (1, 2)]) == 0
+
+
+def test_wall_between_is_not_head_on():
+    assert head_on([(2, 0), (2, 1)], [(2, 4), (2, 3)]) == 0
+
+
+def test_one_side_waiting_is_not_head_on():
+    assert head_on([(0, 0), (0, 1)], [(0, 3), (0, 3)]) == 0
+
+
+def test_third_agent_in_between_is_not_head_on():
+    assert head_on([(0, 0), (0, 1)], [(0, 4), (0, 3)], [(0, 2), (0, 2)]) == 0
+
+
+def test_too_far_apart_is_not_head_on():
+    assert head_on([(0, 0), (0, 1)], [(0, 5), (0, 4)]) == 0  # 3 cells apart
+
+
+def test_an_encounter_counts_once():
+    # Approach from 5 apart, meet adjacent at t=2, then j backs off and i waits.
+    i = [(0, 0), (0, 1), (0, 2), (0, 2), (0, 2)]
+    j = [(0, 5), (0, 4), (0, 3), (0, 4), (0, 5)]
+    assert head_on(i, j) == 1
+
+
+def test_two_separate_encounters_count_twice():
+    i = [(0, 0), (0, 1), (0, 1), (0, 0), (0, 1)]
+    j = [(0, 4), (0, 3), (0, 4), (0, 4), (0, 3)]
+    assert head_on(i, j) == 2
