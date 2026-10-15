@@ -1,0 +1,35 @@
+# Same mid-term subset as ma2017_midterm.toml, on the narrow-corridor map,
+# results: 3 agent counts x 3 task frequencies x 3 seeds = 27 runs per method
+# for M0-M5 on narrow_corridor. M1 / M2 use the parameters tuned in
+# results/summary/baseline_tuning.md; M3-M5 are first guesses (tuned after the mid-term).
+
+map = "maps/narrow_corridor.map"
+n_tasks = 500
+agents = [10, 30, 50]
+arrival_rates = [0.2, 1, 5]
+seeds = [0, 1, 2]
+
+[methods.tp]
+
+[methods.highway]
+w_h = 1.2
+# One-way lanes; see maps/README.md
+directions = "maps/narrow_corridor.highway.json"
+
+[methods.heatmap]
+lam = 0.5
+eta = 0.95
+
+[methods.foresight]
+lam = 1.0
+window = 5
+
+[methods.foresight_st]
+lam = 1.0
+delta = 2
+
+[methods.foresight_std]
+lam = 1.0
+delta = 2
+mu = 1.0
+delta_dir = 2

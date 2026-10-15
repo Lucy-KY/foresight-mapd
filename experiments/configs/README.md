@@ -37,6 +37,7 @@ Tuning and testing use different seeds, so parameters are never chosen on the ru
 | File | Purpose |
 |---|---|
 | `smoke.toml` | Pipeline check on the toy map with TP |
-| `ma2017_midterm.toml` | Mid-term results: M0, M1, M3, M4, M5, 27 runs each |
+| `ma2017_midterm.toml` | Mid-term results on warehouse_small: M0–M5, 27 runs each |
+| `ma2017_midterm_narrow.toml` | The same on narrow_corridor |
 | `ma2017_small.toml` | Full reproduction of Ma et al. (2017), Section 6 |
 | `tune_foresight_<map>.toml` | Tuning M3–M5 on seeds 100–104 (400 runs per map, plus TP) |

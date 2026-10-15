@@ -37,7 +37,8 @@ def test_tuning_and_test_seeds_are_separate(config_path):
         assert all(s < 100 for s in seeds), "seeds 100+ are reserved for tuning"
 
 
-def test_midterm_config_is_27_runs_per_method():
-    jobs = expand(load(ROOT / "experiments" / "configs" / "ma2017_midterm.toml"))
-    assert {j["method"] for j in jobs} == {"tp", "highway", "foresight", "foresight_st", "foresight_std"}
-    assert len([j for j in jobs if j["method"] == "tp"]) == 27
+@pytest.mark.parametrize("name", ["ma2017_midterm.toml", "ma2017_midterm_narrow.toml"])
+def test_midterm_configs_run_m0_to_m5_27_times_each(name):
+    jobs = expand(load(ROOT / "experiments" / "configs" / name))
+    assert {j["method"] for j in jobs} == {"tp", "highway", "heatmap", "foresight", "foresight_st", "foresight_std"}
+    assert all(len([j for j in jobs if j["method"] == m]) == 27 for m in {j["method"] for j in jobs})
