@@ -92,9 +92,16 @@ class SpatioTemporalCost(_ReservationBacked):
     [t - delta, t + delta] around the time the planned agent arrives,
     divided by 2 * delta + 1.
 
+    ``cost(u, v, t)`` moves u at t -> v at t + 1, so the arrival time used
+    is t + 1.
+
     ``delta`` must be >= 1: TP already forbids vertex conflicts, so with
     delta = 0 the only reservation at (v, t) is a hard obstacle and the
     term would never matter.
+
+    Reservations before ``t_now`` are left out of the window: they record
+    where agents already were, which is history (M2's information), not a
+    forecast. The divisor stays 2 * delta + 1.
     """
 
     name = "foresight_st"
@@ -104,9 +111,26 @@ class SpatioTemporalCost(_ReservationBacked):
             raise ValueError("delta must be >= 1")
         super().__init__(lam)
         self.delta = delta
+        self._rho: dict[tuple[Cell, Timestep], float] = {}
+
+    def rho(self, v: Cell, t: Timestep) -> float:
+        """Share of [t - delta, t + delta] in which v is reserved, for an
+        agent that is at v at time t. Cached per (v, t)."""
+        key = (v, t)
+        r = self._rho.get(key)
+        if r is None:
+            t_from = max(t - self.delta, self.t_now)
+            n = self.reservations.vertex_window(v, t_from, t + self.delta)
+            r = self._rho[key] = n / (2 * self.delta + 1)
+        return r
 
     def cost(self, u: Cell, v: Cell, t: Timestep) -> float:
-        raise NotImplementedError
+        if u == v or self.lam == 0:
+            return 1.0
+        return 1.0 + self.lam * self.rho(v, t + 1)
+
+    def _invalidate(self) -> None:
+        self._rho.clear()
 
 
 class SpatioTemporalDirectionalCost(SpatioTemporalCost):
