@@ -107,6 +107,12 @@ Simulate one run and save it as a GIF plus a visit heatmap:
 python experiments/visualize.py --map maps/warehouse_small.map --planner stub --agents 10 --tasks 30 --out results/demo
 ```
 
+Summarize a batch into tables, paired tests against TP and plots:
+
+```bash
+python experiments/summarize.py results/smoke.csv --out results/summary/smoke
+```
+
 Config format and the tuning / test seed split: [`experiments/configs/README.md`](experiments/configs/README.md).
 
 ## Adding a method
@@ -151,7 +157,8 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 - [x] Simulator loop (tested with stub planners)
 - [x] Batch runner (parallel, resumable CSV) and GIF / heatmap visualization
 - [x] Collision checker
-- [ ] Metrics
+- [x] Metrics, including head-on encounters
+- [x] Result summaries: mean ± 95% CI, paired Wilcoxon tests against TP, plots
 - [x] Space-time A* with pluggable cost
 - [x] TP reproduction, validated against the trends in Ma et al. (2017)
 - [x] M1 Highway-TP and M2 Heatmap-TP

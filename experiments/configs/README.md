@@ -17,6 +17,9 @@ delta = 2
 ```
 
 The batch runs every method × parameter combination × agent count × rate × seed.
+Summarize a CSV into tables, paired tests against TP and plots with
+`python experiments/summarize.py results/<name>.csv --out results/summary/<name>`.
+
 Re-running with the same `--out` skips jobs that already succeeded and retries failed ones;
 `--limit N` runs only N jobs, which is handy for timing a batch first.
 
@@ -36,3 +39,4 @@ Tuning and testing use different seeds, so parameters are never chosen on the ru
 | `smoke.toml` | Pipeline check on the toy map with TP |
 | `ma2017_midterm.toml` | Mid-term results: M0, M1, M3, M4, M5, 27 runs each |
 | `ma2017_small.toml` | Full reproduction of Ma et al. (2017), Section 6 |
+| `tune_foresight_<map>.toml` | Tuning M3–M5 on seeds 100–104 (400 runs per map, plus TP) |

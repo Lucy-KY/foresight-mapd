@@ -1,0 +1,30 @@
+# Tuning M3-M5 on warehouse_small.map (tuning seeds only; never report these runs).
+# Medium difficulty, same as the M1 / M2 tuning in results/summary/baseline_tuning.md:
+# 30 agents at 1 and 5 tasks per step. Pick per method the parameters with the
+# lowest mean service time over both rates, then fix them for the test runs.
+# M5 keeps delta = 2 here; once M4's best delta is known, set it to that.
+#
+#   python experiments/run.py experiments/configs/tune_foresight_warehouse_small.toml --out results/tune_foresight_warehouse_small.csv --jobs 8
+#   python experiments/summarize.py results/tune_foresight_warehouse_small.csv --out results/summary/tune_foresight_warehouse_small
+
+map = "maps/warehouse_small.map"
+n_tasks = 500
+agents = [30]
+arrival_rates = [1, 5]
+seeds = [100, 101, 102, 103, 104]
+
+[methods.tp]
+
+[methods.foresight]
+lam = [0.5, 1.0, 2.0, 4.0]
+window = [2, 5, 10]
+
+[methods.foresight_st]
+lam = [0.5, 1.0, 2.0, 4.0]
+delta = [2, 5, 10]
+
+[methods.foresight_std]
+lam = [0.5, 1.0, 2.0, 4.0]
+delta = 2
+mu = [0.5, 1.0, 2.0, 4.0]
+delta_dir = 2
