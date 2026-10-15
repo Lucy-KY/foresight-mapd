@@ -33,6 +33,6 @@ Tuning and testing use different seeds, so parameters are never chosen on the ru
 
 | File | Purpose |
 |---|---|
-| `smoke.toml` | Pipeline check on the toy map (stub planner until TP lands) |
+| `smoke.toml` | Pipeline check on the toy map with TP |
 | `ma2017_midterm.toml` | Mid-term preliminary results: M0, M1, M3, M4, 27 runs each |
 | `ma2017_small.toml` | Full reproduction of Ma et al. (2017), Section 6 |

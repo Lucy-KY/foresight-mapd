@@ -39,8 +39,9 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("results/demo"), help="output path without extension")
     args = parser.parse_args()
 
-    instance = make_instance(GridMap.load(args.map), args.agents, args.tasks, args.rate, args.seed)
-    cost_model = build_cost_model(args.method, json.loads(args.params))
+    grid = GridMap.load(args.map)
+    instance = make_instance(grid, args.agents, args.tasks, args.rate, args.seed)
+    cost_model = build_cost_model(args.method, json.loads(args.params), grid)
     log = Simulator(instance, planners()[args.planner](), cost_model).run()
     print(f"{len(log.records)}/{len(instance.tasks)} tasks done in {log.n_timesteps} timesteps")
 

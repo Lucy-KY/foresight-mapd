@@ -30,7 +30,7 @@ from multiprocessing import Pool
 from pathlib import Path as FsPath
 from typing import Any, Callable
 
-from foresight.costs import METHODS
+from foresight.costs import METHODS, HighwayCost
 from foresight.interfaces import CostModel, Planner
 from foresight.sim.grid import GridMap
 from foresight.sim.instance import make_instance
@@ -103,11 +103,11 @@ def columns(jobs: list[dict]) -> list[str]:
     return _IDENTITY + metric_cols + param_cols + _EXTRAS
 
 
-def build_cost_model(method: str, params: dict[str, Any]) -> CostModel:
+def build_cost_model(method: str, params: dict[str, Any], grid: GridMap) -> CostModel:
+    """Cost model for ``method``. Highway takes ``directions`` (a lane file
+    such as ``maps/warehouse_small.highway.json``) and ``w_h``."""
     if method == "highway":
-        raise NotImplementedError(
-            "highway needs a directions loader; the file format is member 2's to define"
-        )
+        return HighwayCost.from_file(ROOT / params["directions"], grid, params["w_h"])
     return METHODS[method](**params)
 
 
@@ -139,10 +139,9 @@ def run_job(job: dict, git_commit: str = "") -> dict[str, Any]:
         "error": "",
     }
     try:
-        instance = make_instance(
-            _grid(job["map"]), job["n_agents"], job["n_tasks"], job["arrival_rate"], job["seed"]
-        )
-        cost_model = build_cost_model(job["method"], job["params"])
+        grid = _grid(job["map"])
+        instance = make_instance(grid, job["n_agents"], job["n_tasks"], job["arrival_rate"], job["seed"])
+        cost_model = build_cost_model(job["method"], job["params"], grid)
         planner = planners()[job["planner"]]()
         log = Simulator(instance, planner, cost_model, job["max_timesteps"]).run(check=False)
         result = log.to_result(

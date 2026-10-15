@@ -1,12 +1,10 @@
 # Tiny configuration to check that the pipeline runs end to end.
-# Uses the stub planner until TP lands; switch to planner = "tp" then.
 
 map = "maps/toy_corridor.map"
 n_tasks = 20
 agents = [2, 3]
 arrival_rates = [0.2]
 seeds = [0, 1]
-planner = "stub"
 
 [methods.tp]
 

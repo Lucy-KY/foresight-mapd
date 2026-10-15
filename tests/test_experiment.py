@@ -55,18 +55,32 @@ def test_run_job_success_row():
 
 
 def test_run_job_records_failures_instead_of_raising():
-    job = {**expand(TINY)[0], "method": "highway", "params": {"w_h": 1.5, "directions": "x"}}
+    job = {**expand(TINY)[0], "method": "foresight", "params": {"lam": 1.0, "window": 0}}
     row = run_job(job)
-    assert row["error"].startswith("NotImplementedError")
+    assert row["error"].startswith("ValueError")
+
+
+def test_highway_jobs_load_their_lane_file():
+    job = {
+        **expand(TINY)[0],
+        "map": "maps/warehouse_small.map",
+        "planner": "tp",
+        "n_agents": 5,
+        "n_tasks": 10,
+        "method": "highway",
+        "params": {"w_h": 1.5, "directions": "maps/warehouse_small.highway.json"},
+    }
+    row = run_job(job)
+    assert row["error"] == "" and row["completed"] is True
 
 
 @pytest.mark.parametrize("workers", [1, 2])
 def test_run_all_writes_resumes_and_retries(tmp_path, workers):
     out = tmp_path / "out.csv"
-    config = {**TINY, "methods": {**TINY["methods"], "highway": {"w_h": 1.5, "directions": "x"}}}
+    config = {**TINY, "methods": {**TINY["methods"], "foresight_st": {"lam": 1.0, "delta": 0}}}
 
     first = run_all(config, out, n_workers=workers, progress=lambda _: None)
-    assert first == {"total": 8, "skipped": 0, "ran": 8, "failed": 2}  # 2 highway jobs fail
+    assert first == {"total": 8, "skipped": 0, "ran": 8, "failed": 2}  # delta = 0 is invalid
     rows = read(out)
     assert len(rows) == 8 and sum(1 for r in rows if r["error"]) == 2
 
