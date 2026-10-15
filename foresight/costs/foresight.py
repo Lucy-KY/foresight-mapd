@@ -9,10 +9,10 @@ Owner: member 3.
 With lam = mu = 0 all three must produce exactly the same paths as M0 (TP).
 Waits cost 1 in every method.
 
-Every cost here is at least 1 and at most 1 + lam (plus the M5 term): the
-token never lets two committed paths share a cell at the same time, so a
-window of n timesteps holds at most n reservations of a cell and rho stays
-in [0, 1].
+Every cost here is at least 1 and at most 1 + lam + mu: the token never lets
+two committed paths share a cell at the same time, so a window of n
+timesteps holds at most n reservations of a cell (or moves along an edge),
+and rho and c_opp stay in [0, 1].
 """
 
 from __future__ import annotations
@@ -134,19 +134,62 @@ class SpatioTemporalCost(_ReservationBacked):
 
 
 class SpatioTemporalDirectionalCost(SpatioTemporalCost):
-    """M5 (contributions 1 + 2). Adds ``mu * c_opp(u -> v, t)``: the number
-    of committed moves in the opposite direction v -> u within
-    [t - delta_dir, t + delta_dir]. Agents in a corridor end up flowing the
-    same way, i.e. one-way lanes emerge from traffic instead of being
-    designed offline as in M1.
+    """M5 (contributions 1 + 2). Adds ``mu * c_opp(u -> v, t)``: the
+    committed moves in the opposite direction v -> u within
+    [t - delta_dir, t + delta_dir], divided by 2 * delta_dir + 1. Moving
+    with committed traffic costs nothing extra, moving against it does, so
+    agents in a corridor end up flowing the same way: one-way lanes emerge
+    from traffic instead of being designed offline as in M1.
+
+    ``t`` is the departure time of the move u -> v, the same convention as
+    the edge counts ``E[(v, u)][t]``, so no shift is needed (unlike M4,
+    which looks at the arrival time t + 1). The window looks both ways:
+    a reverse move after t means the two agents are about to meet head-on,
+    one before t means they just did.
+
+    ``delta_dir`` must be >= 1: a reverse move at exactly t is a swap
+    conflict, which TP already forbids. Normalizing by the window length
+    keeps c_opp in [0, 1] (at most one agent moves v -> u per timestep, or
+    two would meet at u), on the same scale as rho, so ``mu`` means the same
+    for every ``delta_dir``. As in M4, moves before ``t_now`` are history
+    and are left out; the divisor stays 2 * delta_dir + 1.
+
+    With mu = 0 the cost equals M4's exactly.
     """
 
     name = "foresight_std"
 
     def __init__(self, lam: float, delta: int, mu: float, delta_dir: int) -> None:
+        if mu < 0:
+            raise ValueError("mu must be >= 0")
+        if delta_dir < 1:
+            raise ValueError("delta_dir must be >= 1")
         super().__init__(lam, delta)
         self.mu = mu
         self.delta_dir = delta_dir
+        self._opp: dict[tuple[Cell, Cell, Timestep], float] = {}
+
+    def c_opp(self, u: Cell, v: Cell, t: Timestep) -> float:
+        """Share of [t - delta_dir, t + delta_dir] in which a committed path
+        moves v -> u, for a move u -> v departing at t. Cached per (u, v, t)."""
+        key = (u, v, t)
+        c = self._opp.get(key)
+        if c is None:
+            t_from = max(t - self.delta_dir, self.t_now)
+            n = self.reservations.edge_window(v, u, t_from, t + self.delta_dir)
+            c = self._opp[key] = n / (2 * self.delta_dir + 1)
+        return c
 
     def cost(self, u: Cell, v: Cell, t: Timestep) -> float:
-        raise NotImplementedError
+        if u == v:
+            return 1.0
+        w = 1.0
+        if self.lam != 0:
+            w += self.lam * self.rho(v, t + 1)
+        if self.mu != 0:
+            w += self.mu * self.c_opp(u, v, t)
+        return w
+
+    def _invalidate(self) -> None:
+        super()._invalidate()
+        self._opp.clear()
