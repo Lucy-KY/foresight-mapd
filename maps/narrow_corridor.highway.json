@@ -1,0 +1,5 @@
+{
+  "description": "M1 highway for narrow_corridor.map. Same design as warehouse_small.highway.json without the center column, which is shelf in this map: single-lane aisles alternate west/east, the side aisles feed them, and the outer ring circulates counterclockwise.",
+  "rows": {"0": "W", "4": "E", "8": "W", "12": "E", "16": "W", "20": "E"},
+  "cols": {"0": "S", "3": "N", "6": "S", "28": "N", "31": "S", "34": "N"}
+}
