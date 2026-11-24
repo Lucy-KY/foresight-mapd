@@ -68,7 +68,7 @@ feasible path is preferred, never which paths are feasible.
 foresight/
   interfaces.py     Shared types: Cell, Path, Task, CostModel protocol
   sim/              Grid maps, task streams, simulator loop, collision checker, metrics
-  planner/          Space-time A*, token, TP, TPTS
+  planner/          Space-time A*, token, TP, TPTS, pluggable task selection
   congestion/       Reservation table R[v][t] and E[(u, v)][t]
   costs/            One CostModel per method (M0-M5)
 maps/               Map files (format in maps/README.md)
@@ -135,6 +135,28 @@ class MyCost(BaseCostModel):
 The token calls `on_path_committed` and `on_path_released`; the simulator calls
 `on_timestep` once per step.
 
+## Adding a task-assignment rule
+
+Which task an agent takes when it gets the token is a separate, pluggable
+`TaskSelector` (`foresight/planner/assignment.py`); the default `NearestPickup`
+is TP's rule. Subclass `BaseTaskSelector`, implement `rank` (candidates, best
+first; end the sort key with `task.task_id`) and register it in `SELECTORS`:
+
+```python
+class MySelector(BaseTaskSelector):
+    name = "my_selector"
+
+    def reset(self, setup):              # once per run
+        super().reset(setup)             # setup.token, setup.dist, setup.instance, setup.cost_model
+        setup.token.add_listener(self)   # optional: get on_path_committed / on_path_released
+
+    def rank(self, ctx, candidates):     # ctx.t, ctx.agent_id, ctx.location, ctx.dist
+        return sorted(candidates, key=lambda task: (score(ctx, task), task.task_id))
+```
+
+Use it with `TokenPassing(selector=MySelector(...))`, or from a config with an
+`[assignment.my_selector]` table (see the configs README).
+
 ## Evaluation plan
 
 - **Maps:** the warehouse map of Ma et al. (2017) and a narrow-corridor
@@ -167,7 +189,8 @@ The token calls `on_path_committed` and `on_path_released`; the simulator calls
 - [x] λ = μ = 0 consistency test enabled
 - [ ] Parameter tuning, main experiments and ablations
 - [x] Optional: TPTS
-- [ ] Optional: congestion-aware task assignment
+- [x] Pluggable task selection in TP / TPTS (default: nearest pickup)
+- [ ] Optional: congestion-aware task assignment (S_ij)
 
 ## Team
 

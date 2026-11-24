@@ -16,6 +16,9 @@ Config format (TOML), see ``experiments/configs/README.md``:
     [methods.foresight]
     lam = [0.5, 1.0, 2.0]     # a list is swept: one job per value
     window = 5
+
+    [assignment.nearest]      # optional task selector(s), swept like methods;
+                              # omitted = TP's nearest-pickup rule
 """
 
 from __future__ import annotations
@@ -56,18 +59,31 @@ def planners() -> dict[str, Callable[[], Planner]]:
 
 
 def expand(config: dict) -> list[dict]:
-    """One job per (method, parameter combination, n_agents, arrival_rate,
-    seed). A parameter given as a list is swept."""
+    """One job per (method, parameter combination, task selector and its
+    parameters, n_agents, arrival_rate, seed). A parameter given as a list is
+    swept. Without an ``[assignment]`` table jobs carry no selector keys, so
+    their keys (and resumed CSVs) are the same as before selectors existed."""
+    from foresight.planner.assignment import SELECTORS
+
+    selectors: list[dict] = [{}]
+    if "assignment" in config:
+        selectors = []
+        for name, params in config["assignment"].items():
+            if name not in SELECTORS:
+                raise ValueError(f"unknown task selector {name!r}; known: {sorted(SELECTORS)}")
+            for combo in param_grid(params):
+                selectors.append({"assignment": name, "assignment_params": combo})
     jobs = []
     for method, params in config["methods"].items():
         if method not in METHODS:
             raise ValueError(f"unknown method {method!r}; known: {sorted(METHODS)}")
-        for combo in param_grid(params):
+        for combo, selector in itertools.product(param_grid(params), selectors):
             for n_agents, rate, seed in itertools.product(
                 config["agents"], config["arrival_rates"], config["seeds"]
             ):
                 jobs.append(
                     {
+                        **selector,
                         "map": config["map"],
                         "n_tasks": config["n_tasks"],
                         "planner": config.get("planner", DEFAULT_PLANNER),
@@ -100,6 +116,10 @@ def columns(jobs: list[dict]) -> list[str]:
     skip = set(_IDENTITY) | {"params"}
     metric_cols = [f.name for f in fields(RunResult) if f.name not in skip]
     param_cols = sorted({f"param_{k}" for job in jobs for k in job["params"]})
+    if any("assignment" in job for job in jobs):
+        param_cols += ["assignment"] + sorted(
+            {f"aparam_{k}" for job in jobs for k in job.get("assignment_params", {})}
+        )
     return _IDENTITY + metric_cols + param_cols + _EXTRAS
 
 
@@ -135,6 +155,8 @@ def run_job(job: dict, git_commit: str = "") -> dict[str, Any]:
         "seed": job["seed"],
         "n_tasks": job["n_tasks"],
         **{f"param_{k}": v for k, v in job["params"].items()},
+        **({"assignment": job["assignment"]} if "assignment" in job else {}),
+        **{f"aparam_{k}": v for k, v in job.get("assignment_params", {}).items()},
         "git_commit": git_commit,
         "error": "",
     }
@@ -142,7 +164,13 @@ def run_job(job: dict, git_commit: str = "") -> dict[str, Any]:
         grid = _grid(job["map"])
         instance = make_instance(grid, job["n_agents"], job["n_tasks"], job["arrival_rate"], job["seed"])
         cost_model = build_cost_model(job["method"], job["params"], grid)
-        planner = planners()[job["planner"]]()
+        if "assignment" in job:
+            from foresight.planner.assignment import build_selector
+
+            selector = build_selector(job["assignment"], job["assignment_params"])
+            planner = planners()[job["planner"]](selector=selector)
+        else:
+            planner = planners()[job["planner"]]()
         log = Simulator(instance, planner, cost_model, job["max_timesteps"]).run(check=False)
         result = log.to_result(
             RunResult(row["method"], row["map_name"], row["n_agents"], row["arrival_rate"], row["seed"], job["params"])
