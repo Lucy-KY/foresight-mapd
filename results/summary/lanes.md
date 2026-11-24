@@ -110,13 +110,13 @@ of rho it is redundant (M5 ~ M4 on every metric, here and in tuning), and neithe
 produces emergent lanes on single-lane aisles. The mechanism is temporal separation. That
 also explains the higher wait share seen at the mid-term.
 
-Not tried (would need new runs, and a decision first): larger mu with lam > 0;
-warehouse_small, where aisles are effectively three cells wide, so robots could form
-lanes side by side instead of time-sharing one cell.
+Follow-up on warehouse_small (three-row aisles, side-by-side lanes): `lanes_warehouse.md`.
+No lanes there either.
+Not tried: larger mu with lam > 0 on narrow_corridor.
 
 # Results
 
-Test seeds 0-9, 200 runs, all complete with 0 conflicts. Produced by `python experiments/lanes.py summarize results/lanes --out results/summary/lanes`.
+Test seeds 0-9, 200 runs, all complete with 0 conflicts. Produced by `python experiments/lanes.py summarize results/lanes --map narrow_corridor --out results/summary/lanes`.
 
 ## Lane share L (window 50; 0.5 = balanced, 1 = one-way)
 
@@ -183,9 +183,9 @@ Test seeds 0-9, 200 runs, all complete with 0 conflicts. Produced by `python exp
 
 ## Paired tests on L (window 50)
 
-Wilcoxon signed-rank, two-sided, paired by (agents, rate, seed). "a higher" = pairs where the first method's L is higher.
+Wilcoxon signed-rank, two-sided, paired by (agents, rate, seed). "a higher" = pairs where the first method's value is higher.
 
-| hypothesis | comparison | configuration | pairs | mean difference in L | a higher | p |
+| hypothesis | comparison | configuration | pairs | mean difference | a higher | p |
 |---|---|---|---:|---:|---:|---:|
 | H1 | M5 vs M4 | pooled | 40 | -0.0028 | 15/40 | 0.206 |
 | H1 | M5 vs M4 | 30 agents, rate 1 | 10 | -0.0025 | 4/10 | 0.557 |

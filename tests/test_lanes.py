@@ -51,3 +51,16 @@ def test_flip_rate_zero_when_direction_persists_and_nan_without_pairs():
 def test_series_sums_over_corridors():
     moves = corridor_moves([_east(0, 4, 7, 9), _west(1, 8, 27, 25), _west(2, 8, 26, 25)])
     assert lane_share_series(moves, window=50) == {0: (5, 5)}
+
+
+def test_band_grouping_and_segregation_on_warehouse_rows():
+    from foresight.lanes import WAREHOUSE_BANDS, WAREHOUSE_COLS
+
+    rows = tuple(WAREHOUSE_BANDS)
+    # Side-by-side lanes in band 0: east on row 3, west on row 5, 5 moves each.
+    side_by_side = corridor_moves([_east(0, 3, 7, 12), _west(1, 5, 27, 22)], rows, WAREHOUSE_COLS)
+    assert lane_share(side_by_side) == 1.0                         # each row one-way
+    assert lane_share(side_by_side, group=WAREHOUSE_BANDS) == 0.5  # band balanced
+    # Both directions on the aisle row: every split is equally mixed.
+    mixed = corridor_moves([_east(0, 4, 7, 12), _west(1, 4, 27, 22)], rows, WAREHOUSE_COLS)
+    assert lane_share(mixed) == lane_share(mixed, group=WAREHOUSE_BANDS) == 0.5

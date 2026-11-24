@@ -25,6 +25,12 @@ from foresight.interfaces import Path
 NARROW_CORRIDOR_ROWS = (4, 8, 12, 16)
 NARROW_CORRIDOR_COLS = (6, 28)
 
+# warehouse_small.map: four interior aisle bands of three rows each (endpoint
+# row, aisle row, endpoint row), same columns. Row -> band index.
+WAREHOUSE_BANDS = {r: k for k, rows in enumerate([(3, 4, 5), (7, 8, 9), (11, 12, 13), (15, 16, 17)]) for r in rows}
+WAREHOUSE_AISLE_ROWS = (4, 8, 12, 16)
+WAREHOUSE_COLS = (6, 28)
+
 
 @dataclass(frozen=True)
 class CorridorMove:
@@ -50,18 +56,23 @@ def corridor_moves(
     return out
 
 
-def window_counts(moves: list[CorridorMove], window: int) -> dict[tuple[int, int], tuple[int, int]]:
-    """(row, window index) -> (east moves, west moves)."""
+def window_counts(
+    moves: list[CorridorMove], window: int, group: dict[int, int] | None = None
+) -> dict[tuple[int, int], tuple[int, int]]:
+    """(corridor, window index) -> (east moves, west moves). A corridor is a
+    row, or ``group[row]`` when rows are grouped (e.g. into aisle bands)."""
     counts: dict[tuple[int, int], list[int]] = defaultdict(lambda: [0, 0])
     for m in moves:
-        counts[(m.row, m.t // window)][0 if m.east else 1] += 1
+        corridor = group[m.row] if group is not None else m.row
+        counts[(corridor, m.t // window)][0 if m.east else 1] += 1
     return {k: (e, w) for k, (e, w) in counts.items()}
 
 
-def lane_share(moves: list[CorridorMove], window: int = 50) -> float:
+def lane_share(moves: list[CorridorMove], window: int = 50, group: dict[int, int] | None = None) -> float:
     """Share of corridor moves in their (corridor, window)'s majority
-    direction; nan if there are no corridor moves."""
-    counts = window_counts(moves, window).values()
+    direction; nan if there are no corridor moves. ``group`` merges rows
+    into one corridor (see ``window_counts``)."""
+    counts = window_counts(moves, window, group).values()
     total = sum(e + w for e, w in counts)
     return sum(max(e, w) for e, w in counts) / total if total else float("nan")
 
