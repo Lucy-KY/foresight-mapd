@@ -26,6 +26,7 @@ class Metric:
 METRICS: dict[str, Metric] = {
     "service_time_mean": Metric("mean service time", True, "{:.1f}"),
     "service_time_p95": Metric("95th pct service time", True, "{:.1f}"),
+    "service_time_max": Metric("max service time", True, "{:.0f}"),
     "makespan": Metric("makespan", True, "{:.0f}"),
     "throughput": Metric("throughput (tasks/step)", False, "{:.3f}"),
     "total_path_cost": Metric("total path cost", True, "{:.0f}"),

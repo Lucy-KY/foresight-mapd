@@ -1,0 +1,65 @@
+% Implementation & Setup -- owner: Kaiyuan Xu.  \input{setup} from the main report.
+
+\section{Implementation and Experimental Setup}
+\label{sec:setup}
+
+\paragraph{System.}
+All methods run in one Python package organised as a seven-stage pipeline:
+maps, task streams and start locations, the simulator, an independent
+collision checker, metrics, a parallel and resumable batch runner, and
+summaries. One command runs a TOML configuration end to end, and every result
+row records the git commit it was produced with. The planner (TP, TPTS and
+space-time A$^*$), the token and the simulator are shared by every method;
+a method is only a cost model plugged into A$^*$ (M0--M5) and, for the
+assignment ablation, a task selector plugged into TP's choice of task
+($S_{ij}$). Trust in the results rests on checks that run on every pull
+request (331 tests): each run is replayed by the collision checker and
+rejected on any vertex or swap conflict; the simulator validates every
+planner decision; with $\lambda=\mu=0$ M3--M5 must reproduce TP's trajectories
+exactly, and with $\beta=\gamma=0$ so must $S_{ij}$, under both TP and TPTS.
+
+\paragraph{Maps.}
+Both maps are $21\times35$ grids with 152 candidate start cells in the side
+columns. \texttt{warehouse\_small} is the small warehouse of Ma et
+al.~\cite{ma2017lifelong}, rebuilt cell by cell from their figure; its 200 task
+endpoints form whole rows next to the shelves, so agents can walk along them
+and each aisle is effectively three cells wide. \texttt{narrow\_corridor} is our
+stress test with the same footprint: it removes the middle cross-aisle, so
+every horizontal aisle is a 21-cell single-lane corridor entered only at its
+ends, and turns the endpoint rows into 110 pockets cut into the shelf faces.
+TP meets about twice as many head-on encounters per task there (1.34 vs.\ 0.67
+at 50 agents and 5 tasks per step).
+
+\paragraph{Tasks and start locations.}
+A run has 500 tasks. Task $k$ is released at $\lfloor k/f\rfloor$ for task
+frequency $f$; its pickup and delivery are two distinct task endpoints drawn
+uniformly at random. The paper does not say where agents start when there are
+fewer than 50, so start cells are drawn from the 152 candidates. Both draws use
+the run's seed, so every method sees exactly the same task stream and starts
+for a given seed (common random numbers), which is what makes paired
+comparisons possible.
+
+\paragraph{Metrics.}
+The service time of a task runs from its release to its delivery; we report
+its mean, 95th percentile and maximum per run. We also record makespan,
+throughput, total path cost, the wait fraction (share of an agent's busy
+timesteps spent waiting), the Gini coefficient of per-cell visits, planning
+time per timestep, and head-on encounters: two agents in the same row or
+column, one or two cells apart with the cell between them (if any) passable
+and empty, that both just moved one cell toward each other, counted once per
+encounter and divided by the number of tasks.
+
+\paragraph{Protocol.}
+Parameters are tuned only on seeds 100--104 (30 agents, 1 and 5 tasks per
+step), and a test keeps these disjoint from the test seeds 0--9. Each tuning
+rule was written down before its runs were looked at: M1 and M2 take the lowest
+mean service time; M3--M5 take, among settings within 0.5\% of the best mean
+service time, the one with the lowest wait fraction; $S_{ij}$ takes, within the
+same 0.5\% band, the one with the lowest 95th-percentile service time. The
+chosen parameters are then fixed. The main experiment runs every method on
+both maps with 10, 30 and 50 agents, 0.2, 1 and 5 tasks per step and seeds
+0--9: 90 runs per method and map. A heavier-load experiment adds 80 agents at 1
+and 5 tasks per step (20 runs per method and map). Every run is paired with TP
+on the same (agents, frequency, seed); we report the mean paired change in
+percent and a two-sided Wilcoxon signed-rank test over all pairs of a map, and
+call a change significant at $p<0.05$.
