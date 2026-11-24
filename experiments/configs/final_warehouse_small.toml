@@ -1,0 +1,36 @@
+# Main experiment (final report) on warehouse_small.map: M0-M5 with tuned parameters.
+# 3 agent counts x 3 task frequencies x 10 test seeds = 90 runs per method,
+# paired with TP on the same (agents, rate, seed).
+# M1 / M2: results/summary/baseline_tuning.md. M3-M5: results/summary/tune_foresight.md.
+#
+#   python experiments/run.py experiments/configs/final_warehouse_small.toml --out results/final_warehouse_small.csv --jobs 8
+
+map = "maps/warehouse_small.map"
+n_tasks = 500
+agents = [10, 30, 50]
+arrival_rates = [0.2, 1, 5]
+seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+[methods.tp]
+
+[methods.highway]
+w_h = 1.5
+directions = "maps/warehouse_small.highway.json"
+
+[methods.heatmap]
+lam = 1.0
+eta = 0.99
+
+[methods.foresight]
+lam = 2.0
+window = 10
+
+[methods.foresight_st]
+lam = 2.0
+delta = 10
+
+[methods.foresight_std]
+lam = 2.0
+delta = 10
+mu = 4.0
+delta_dir = 2
