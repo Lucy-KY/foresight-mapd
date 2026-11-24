@@ -148,7 +148,7 @@ class MySelector(BaseTaskSelector):
 
     def reset(self, setup):              # once per run
         super().reset(setup)             # setup.token, setup.dist, setup.instance, setup.cost_model
-        setup.token.add_listener(self)   # optional: get on_path_committed / on_path_released
+        setup.token.add_listener(self.rt) # optional, e.g. self.rt = ReservationTable()
 
     def rank(self, ctx, candidates):     # ctx.t, ctx.agent_id, ctx.location, ctx.dist
         return sorted(candidates, key=lambda task: (score(ctx, task), task.task_id))

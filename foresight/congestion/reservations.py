@@ -71,6 +71,11 @@ class ReservationTable:
             _decrement(self._edge, e, t)
         self.n_paths -= 1
 
+    # Token listener interface (``Token.add_listener(table)``), e.g. for a
+    # task selector that needs congestion while the cost model is UnitCost.
+    on_path_committed = add_path
+    on_path_released = remove_path
+
     def vertex_count(self, v: Cell, t: Timestep) -> int:
         return self._vertex.get(v, _NONE).get(t, 0)
 

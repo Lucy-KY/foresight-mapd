@@ -133,6 +133,18 @@ def test_token_listener_gets_existing_and_later_paths():
     assert rec.released == [p1, p0]
 
 
+def test_reservation_table_can_listen_to_the_token():
+    from foresight.congestion.reservations import ReservationTable
+
+    token, table = Token(UnitCost()), ReservationTable()
+    token.commit(Path(0, 0, ((0, 0), (0, 1))))
+    token.add_listener(table)
+    token.commit(Path(1, 0, ((2, 0), (2, 1))))
+    assert table.vertex_count((0, 1), 1) == 1 and table.vertex_count((2, 1), 1) == 1
+    token.release(1)
+    assert table.vertex_count((2, 1), 1) == 0 and table.n_paths == 1
+
+
 @pytest.mark.parametrize("planner", [TokenPassing, TokenPassingWithSwaps])
 @pytest.mark.parametrize("map_name, n_agents, n_tasks, rate", [
     ("warehouse_small.map", 20, 80, 5),
