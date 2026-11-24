@@ -25,7 +25,8 @@ def test_config_is_valid(config_path):
     assert config.get("planner", "tp") in planners()
     per_method = len(config["agents"]) * len(config["arrival_rates"]) * len(config["seeds"])
     combos = sum(len(param_grid(p)) for p in config["methods"].values())
-    assert len(expand(config)) == per_method * combos
+    selectors = sum(len(param_grid(p)) for p in config.get("assignment", {"nearest": {}}).values())
+    assert len(expand(config)) == per_method * combos * selectors
 
 
 @pytest.mark.parametrize("config_path", CONFIGS, ids=lambda p: p.name)
