@@ -55,6 +55,7 @@ class RunResult:
     makespan: int | None = None
     service_time_mean: float | None = None
     service_time_p95: float | None = None
+    service_time_max: int | None = None
     throughput: float | None = None
     total_path_cost: int | None = None
     wait_fraction: float | None = None
@@ -220,6 +221,7 @@ def fill_metrics(
         result.makespan = makespan(records)
         result.service_time_mean = sum(services) / len(services)
         result.service_time_p95 = percentile(services, 0.95)
+        result.service_time_max = max(services)
         result.throughput = len(records) / result.makespan if result.makespan else None
         actions, waits = busy_actions(paths, records)
         result.total_path_cost = actions

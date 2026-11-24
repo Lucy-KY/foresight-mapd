@@ -116,6 +116,11 @@ SELECTORS: dict[str, type] = {
     "nearest": NearestPickup,  # TP default
 }
 
+# Registered here, after the base classes it imports, to avoid an import cycle.
+from foresight.planner.congestion_assignment import CongestionAwareAssignment  # noqa: E402
+
+SELECTORS["sij"] = CongestionAwareAssignment  # S_ij (member 1)
+
 DEFAULT_SELECTOR = "nearest"
 
 
