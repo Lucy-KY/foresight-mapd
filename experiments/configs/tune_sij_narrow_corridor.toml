@@ -1,0 +1,22 @@
+# Tuning S_ij on narrow_corridor.map (tuning seeds only; never report these runs).
+# Same setting as every other tuning run: 30 agents at 1 and 5 tasks per step.
+# Routing is TP's (unit cost), so only the assignment rule changes; the chosen
+# (beta, gamma) are then fixed for TP + S_ij, M3 + S_ij and M5 + S_ij.
+# alpha = 1 and the Cong window = 5 (M3's mid-term default) are fixed.
+# Selection rule: results/summary/tune_sij.md (written before any run).
+#
+#   python experiments/run.py experiments/configs/tune_sij_narrow_corridor.toml --out results/tune_sij_narrow_corridor.csv --jobs 8
+
+map = "maps/narrow_corridor.map"
+n_tasks = 500
+agents = [30]
+arrival_rates = [1, 5]
+seeds = [100, 101, 102, 103, 104]
+
+[methods.tp]
+
+[assignment.nearest]
+
+[assignment.sij]
+beta = [5.0, 10.0, 20.0, 40.0]
+gamma = [0.01, 0.05, 0.1]
