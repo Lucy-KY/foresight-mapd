@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
+from matplotlib.patches import Patch
 from scipy import stats
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -108,12 +109,14 @@ def bars(ax, groups: list[str], series: list[tuple[str, str, list[dict]]], ylabe
     x = np.arange(len(groups))
     for k, (label, color, comps) in enumerate(series):
         pos = x - 0.4 + width * (k + 0.5)
+        labelled = False
         for xi, c in zip(pos, comps):
             if c is None:
                 continue
             sig = c["p"] < 0.05
             ax.bar(xi, c["change"], width * 0.92, color=color if sig else "white", edgecolor=color,
-                   linewidth=1.2, label=label if xi == pos[0] else None)
+                   linewidth=1.2, label=None if labelled else label)
+            labelled = True
             ax.errorbar(xi, c["change"], yerr=c["ci"], color=MUTED, linewidth=1, capsize=2)
     ax.axhline(0, color=INK, linewidth=0.8)
     ax.set_xticks(x, groups, fontsize=9)
@@ -125,16 +128,23 @@ def bars(ax, groups: list[str], series: list[tuple[str, str, list[dict]]], ylabe
         ax.spines[side].set_visible(False)
 
 
+def header(fig, title: str, entries: list[tuple[str, str]]) -> None:
+    """Title on the first line, a filled-swatch legend on the second."""
+    fig.text(0.02, 0.985, title, fontsize=8.5, color=MUTED, ha="left", va="top")
+    handles = [Patch(facecolor=c, edgecolor=c, label=label) for label, c in entries]
+    fig.legend(handles=handles, frameon=False, fontsize=8, ncol=len(handles), loc="upper left",
+               bbox_to_anchor=(0.01, 0.95))
+
+
 def head_on_figure(main: dict[str, pd.DataFrame], out: Path) -> None:
     fig = Figure(figsize=(6.4, 3.0), dpi=200)
     ax = fig.add_subplot()
     series = [(MAP_LABEL[m], color, [compare(main[m], n, "TP", "head_on_per_task") for n in ROUTING])
               for m, color in zip(MAPS, [BLUE, ORANGE])]
     bars(ax, ROUTING, series, "head-on encounters per task\nvs TP (%)")
-    ax.legend(frameon=False, fontsize=8, loc="lower left")
-    ax.set_title("Paired change vs TP, 90 pairs per map (hollow: p ≥ 0.05; bars: 95% CI)",
-                 fontsize=8.5, color=MUTED, loc="left")
-    fig.tight_layout()
+    header(fig, "Paired change vs TP, 90 pairs per map (hollow: p ≥ 0.05; whiskers: 95% CI)",
+           [(MAP_LABEL[m], c) for m, c in zip(MAPS, [BLUE, ORANGE])])
+    fig.tight_layout(rect=(0, 0, 1, 0.86))
     fig.savefig(out)
 
 
@@ -151,10 +161,9 @@ def ablation_figure(both: dict[str, pd.DataFrame], out: Path) -> None:
                  f"{METRICS[metric].label}\nvs TP (%)" if col == 0 else "")
             if row == 0:
                 ax.set_title(MAP_LABEL[m], fontsize=9, color=INK)
-    axes[0][0].legend(frameon=False, fontsize=8, loc="lower left")
-    fig.suptitle("Routing vs assignment: paired change vs TP (hollow: p ≥ 0.05; bars: 95% CI)",
-                 fontsize=8.5, color=MUTED, x=0.02, ha="left")
-    fig.tight_layout()
+    header(fig, "Paired change vs TP, 90 pairs per map (hollow: p ≥ 0.05; whiskers: 95% CI)",
+           [("routing only", BLUE), ("+ S_ij", ORANGE)])
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
     fig.savefig(out)
 
 
