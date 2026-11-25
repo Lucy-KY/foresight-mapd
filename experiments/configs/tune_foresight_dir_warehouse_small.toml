@@ -1,0 +1,19 @@
+# Tuning direction-only M5 (lam = 0) on warehouse_small.map for the lane study
+# (results/summary/lanes.md). Tuning seeds only; never report these runs.
+# Same setting and selection rule as tune_foresight_warehouse_small.toml.
+#
+#   python experiments/run.py experiments/configs/tune_foresight_dir_warehouse_small.toml --out results/tune_foresight_dir_warehouse_small.csv --jobs 10
+
+map = "maps/warehouse_small.map"
+n_tasks = 500
+agents = [30]
+arrival_rates = [1, 5]
+seeds = [100, 101, 102, 103, 104]
+
+[methods.tp]
+
+[methods.foresight_std]
+lam = 0.0
+delta = 10
+mu = [0.5, 1.0, 2.0, 4.0]
+delta_dir = 2

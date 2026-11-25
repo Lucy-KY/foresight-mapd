@@ -42,6 +42,8 @@ Tuning and testing use different seeds, so parameters are never chosen on the ru
 | `ma2017_small.toml` | Full reproduction of Ma et al. (2017), Section 6 |
 | `tune_foresight_<map>.toml` | Tuning M3–M5 on seeds 100–104 (400 runs per map, plus TP) |
 | `tune_foresight_std_stage2_warehouse_small.toml` | M5 stage 2 on warehouse_small (delta = M4's chosen 10) |
+| `tune_foresight_dir_narrow_corridor.toml` | Direction-only M5 (lam = 0) for the lane study, `results/summary/lanes.md` |
+| `tune_foresight_dir_warehouse_small.toml` | The same on warehouse_small, `results/summary/lanes_warehouse.md` |
 
 Chosen M3–M5 parameters and the selection rule: `results/summary/tune_foresight.md`
 (apply the rule with `python experiments/select_tuning.py <tuning CSVs>`).
