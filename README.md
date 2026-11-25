@@ -187,10 +187,10 @@ Use it with `TokenPassing(selector=MySelector(...))`, or from a config with an
 - [x] Reservation table and M3 Foresight
 - [x] M4 Foresight-ST and M5 Foresight-STD
 - [x] λ = μ = 0 consistency test enabled
-- [ ] Parameter tuning, main experiments and ablations
+- [x] Parameter tuning, main experiments and ablations
 - [x] Optional: TPTS
 - [x] Pluggable task selection in TP / TPTS (default: nearest pickup)
-- [ ] Optional: congestion-aware task assignment (S_ij)
+- [x] Optional: congestion-aware task assignment (S_ij)
 
 ## Team
 

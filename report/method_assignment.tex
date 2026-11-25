@@ -1,0 +1,40 @@
+% Method, congestion-aware assignment -- owner: Kaiyuan Xu.
+% \input{method_assignment} at the end of the Method section.
+
+\subsection{Congestion-aware task assignment ($S_{ij}$)}
+\label{sec:sij}
+
+M1--M5 change how an agent travels once its task is fixed. The second half of
+the method changes which task it takes. In TP an agent that holds the token
+takes, among the candidate tasks (those whose pickup and delivery are not the
+end of another agent's path), the one with the nearest pickup. $S_{ij}$
+instead takes the candidate $j$ that minimises
+\begin{equation}
+  S_{ij} = \alpha\, h_{ij} + \beta\, \mathrm{Cong}_{ij} - \gamma\, \mathrm{age}_j ,
+  \label{eq:sij}
+\end{equation}
+where $h_{ij}$ is the distance from agent $i$ to the pickup of $j$ (TP's own
+criterion), $\mathrm{age}_j = t - r_j$ is how long task $j$ has waited since
+its release $r_j$, and $\mathrm{Cong}_{ij}$ is the mean of M3's
+$\rho(v)$ over the cells $v$ of a shortest route from the agent through the
+pickup to the delivery. $\rho(v)$ is the share of the next $W=5$ timesteps in
+which $v$ is reserved by other agents' committed paths, read from the token
+as in Section~\ref{sec:method}. The route is read back from the BFS distance
+tables TP already keeps, so no extra search is needed. The age term prevents
+starvation: without it, a task whose route passes a busy area could be
+skipped indefinitely. Because $h$ and age are in timesteps while
+$\mathrm{Cong}\in[0,1]$, $\beta$ is on the scale of a route length; we fix
+$\alpha=1$ and tune $\beta$ and $\gamma$.
+
+Computing $\mathrm{Cong}$ needs one route per task, so it is computed only for
+the most promising tasks. Since $\mathrm{Cong}\ge 0$, every score is at least
+$\alpha h_{ij} - \gamma\,\mathrm{age}_j$. Tasks are scored in increasing order
+of this bound until no remaining task can beat the best score found, or 20
+tasks have been scored. Unlike scoring only the 20 nearest tasks, an old task
+far away can still be scored and chosen. With $\beta=\gamma=0$ the ranking is
+exactly TP's, and a test checks that TP and TPTS then produce identical
+trajectories.
+
+$S_{ij}$ leaves the step cost alone, so it combines with any of M0--M5. This
+gives the ablation promised in the proposal: routing only (M3, M4, M5),
+assignment only (TP~$+\,S_{ij}$), and both (M3/M4/M5~$+\,S_{ij}$).

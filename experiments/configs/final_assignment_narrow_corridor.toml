@@ -1,0 +1,32 @@
+# Routing vs assignment ablation on narrow_corridor.map (final report): the tuned S_ij
+# (results/summary/tune_sij.md) on top of TP, M3, M4 and M5 routing. Same agents,
+# rates and test seeds as final_narrow_corridor.toml, so every run pairs with the TP and
+# routing-only runs there.
+#
+#   python experiments/run.py experiments/configs/final_assignment_narrow_corridor.toml --out results/final_assignment_narrow_corridor.csv --jobs 8
+
+map = "maps/narrow_corridor.map"
+n_tasks = 500
+agents = [10, 30, 50]
+arrival_rates = [0.2, 1, 5]
+seeds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+[methods.tp]
+
+[methods.foresight]
+lam = 0.5
+window = 2
+
+[methods.foresight_st]
+lam = 0.5
+delta = 2
+
+[methods.foresight_std]
+lam = 0.5
+delta = 2
+mu = 0.5
+delta_dir = 2
+
+[assignment.sij]
+beta = 10.0
+gamma = 0.01
