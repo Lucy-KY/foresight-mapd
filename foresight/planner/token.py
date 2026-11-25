@@ -13,7 +13,9 @@ class Token:
 
     Paths are fixed once committed (sequential planning, no replanning).
     Every commit and release is forwarded to the cost model so congestion
-    methods can keep their reservation tables up to date.
+    methods can keep their reservation tables up to date, and to every
+    object added with ``add_listener`` (e.g. a task selector that needs its
+    own reservation table).
 
     Collision queries are answered from two indexes kept in sync with the
     paths: ``(cell, t) -> agent`` for every timestep a path covers, and
@@ -22,6 +24,7 @@ class Token:
 
     def __init__(self, cost_model: CostModel) -> None:
         self.cost_model = cost_model
+        self.listeners: list = []
         self.paths: dict[int, Path] = {}
         self._occupant: dict[tuple[Cell, Timestep], int] = {}
         self._parked: dict[Cell, int] = {}
@@ -31,16 +34,31 @@ class Token:
         old = self.paths.get(path.agent_id)
         if old is not None:
             self._unindex(old)
-            self.cost_model.on_path_released(old)
+            self._released(old)
         self._index(path)
         self.paths[path.agent_id] = path
         self.cost_model.on_path_committed(path)
+        for listener in self.listeners:
+            listener.on_path_committed(path)
 
     def release(self, agent_id: int) -> None:
         old = self.paths.pop(agent_id, None)
         if old is not None:
             self._unindex(old)
-            self.cost_model.on_path_released(old)
+            self._released(old)
+
+    def add_listener(self, listener) -> None:
+        """Forward every later commit and release to ``listener``, which needs
+        ``on_path_committed(path)`` and ``on_path_released(path)``. Paths
+        already in the token are replayed as commits first."""
+        for path in self.paths.values():
+            listener.on_path_committed(path)
+        self.listeners.append(listener)
+
+    def _released(self, path: Path) -> None:
+        self.cost_model.on_path_released(path)
+        for listener in self.listeners:
+            listener.on_path_released(path)
 
     def occupant(self, cell: Cell, t: Timestep) -> int | None:
         """The agent whose committed path is at ``cell`` at time ``t``."""

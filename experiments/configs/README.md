@@ -17,6 +17,30 @@ delta = 2
 ```
 
 The batch runs every method × parameter combination × agent count × rate × seed.
+
+### Task assignment
+
+By default every planner uses TP's rule: take the open task with the nearest pickup.
+An optional `[assignment.<name>]` table (one per selector in
+`foresight.planner.assignment.SELECTORS`) swaps that rule, and its parameters are swept
+exactly like a method's:
+
+```toml
+[methods.tp]
+[methods.foresight]
+lam = 1.0
+window = 5
+
+[assignment.nearest]               # TP's rule, as a reference
+[assignment.sij]                   # once registered
+beta = [5, 10, 20, 40]
+gamma = [0.01, 0.05, 0.1]
+```
+
+Every method is then run with every selector. The CSV gets an `assignment` column and
+one `aparam_<name>` column per selector parameter, and summaries label such runs
+`<method>(...) + <selector>(...)`. Configs without an `[assignment]` table produce the
+same jobs (and job keys) as before, so existing result CSVs still resume.
 Summarize a CSV into tables, paired tests against TP and plots with
 `python experiments/summarize.py results/<name>.csv --out results/summary/<name>`.
 

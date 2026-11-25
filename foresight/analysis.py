@@ -59,14 +59,24 @@ def _number(v) -> str:
     return str(v)
 
 
-def variant_label(row: pd.Series) -> str:
-    """``method`` plus its non-empty parameters, e.g. ``foresight(lam=1, window=5)``."""
+def _with_params(name: str, row: pd.Series, prefix: str) -> str:
     params = [
-        f"{col[len('param_'):]}={_number(row[col])}"
-        for col in sorted(c for c in row.index if c.startswith("param_"))
+        f"{col[len(prefix):]}={_number(row[col])}"
+        for col in sorted(c for c in row.index if c.startswith(prefix))
         if not pd.isna(row[col])
     ]
-    return f"{row['method']}({', '.join(params)})" if params else row["method"]
+    return f"{name}({', '.join(params)})" if params else name
+
+
+def variant_label(row: pd.Series) -> str:
+    """``method`` plus its non-empty parameters, e.g. ``foresight(lam=1, window=5)``.
+    A task selector other than TP's nearest-pickup rule is appended, e.g.
+    ``tp + sij(beta=10, gamma=0.05)``."""
+    label = _with_params(row["method"], row, "param_")
+    selector = row.get("assignment")
+    if isinstance(selector, str) and selector and selector != "nearest":
+        label += " + " + _with_params(selector, row, "aparam_")
+    return label
 
 
 def load_runs(paths: list[str | FsPath]) -> tuple[pd.DataFrame, pd.DataFrame]:

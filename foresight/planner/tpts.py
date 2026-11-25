@@ -58,7 +58,8 @@ class TokenPassingWithSwaps(TokenPassing):
                 continue
             if all(owners.get(c) in (None, i, holder) for c in (task.pickup, task.delivery)):
                 candidates.append(task)
-        candidates.sort(key=lambda task: (self.dist(loc, task.pickup), task.task_id))
+        if candidates:  # the selector ranks tasks other agents hold, too
+            candidates = self._rank(t, i, loc, candidates)
 
         for task in candidates:
             holder = self._holder.get(task.task_id)

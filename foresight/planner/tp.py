@@ -8,6 +8,7 @@ from __future__ import annotations
 from functools import partial
 
 from foresight.interfaces import AgentState, Cell, CostModel, Decision, Path, Task, Timestep
+from foresight.planner.assignment import NearestPickup, SelectionContext, SelectorSetup, TaskSelector
 from foresight.planner.astar import DistanceTable, space_time_astar
 from foresight.planner.token import Token
 from foresight.sim.instance import MapdInstance
@@ -16,10 +17,12 @@ from foresight.sim.instance import MapdInstance
 class TokenPassing:
     """Reproduction of TP.
 
-    When an agent requests the token it either takes the unassigned task
-    whose pickup is nearest (by individual-agent distance) and whose
-    endpoints are not the end of another agent's path, or it moves to a
-    free endpoint / stays put. Its path is planned with ``space_time_astar``
+    When an agent requests the token it either takes an unassigned task
+    whose endpoints are not the end of another agent's path, or it moves to
+    a free endpoint / stays put. Which task it takes is decided by
+    ``selector`` (``foresight/planner/assignment.py``); the default,
+    ``NearestPickup``, is TP's rule: the nearest pickup by individual-agent
+    distance. Its path is planned with ``space_time_astar``
     against the paths already in the token and then fixed.
 
     The planner is identical for every method; only ``cost_model`` changes.
@@ -27,10 +30,12 @@ class TokenPassing:
 
     Args:
         max_time: horizon of each A* search, in timesteps past its start.
+        selector: task selection rule; ``None`` means ``NearestPickup()``.
     """
 
-    def __init__(self, max_time: int = 1000) -> None:
+    def __init__(self, max_time: int = 1000, selector: TaskSelector | None = None) -> None:
         self.max_time = max_time
+        self.selector = selector if selector is not None else NearestPickup()
 
     def reset(self, instance: MapdInstance, cost_model: CostModel) -> None:
         self.instance = instance
@@ -42,6 +47,7 @@ class TokenPassing:
         self.dist.precompute(self.endpoints)
         for i, loc in enumerate(instance.initial_locations):
             self.token.commit(Path(i, 0, (loc,)))
+        self.selector.reset(SelectorSetup(instance, self.token, self.dist, cost_model))
 
     def step(self, t: Timestep, agents: list[AgentState], open_tasks: list[Task]) -> list[Decision]:
         """Agents with ``agent.at_path_end(t)`` request the token one after
@@ -61,7 +67,7 @@ class TokenPassing:
         ends = self.token.path_ends(exclude=i)
         candidates = [task for task in tasks if task.pickup not in ends and task.delivery not in ends]
         if candidates:
-            task = min(candidates, key=lambda task: (self.dist(loc, task.pickup), task.task_id))
+            task = self._rank(t, i, loc, candidates)[0]
             d = self._plan_task(t, i, loc, task)
             if d is not None:
                 tasks.remove(task)
@@ -69,6 +75,12 @@ class TokenPassing:
         if all(task.delivery != loc for task in tasks):
             return None  # stay where it is; its parked path already says so
         return self._plan_to_free_endpoint(t, i, loc, tasks, ends)
+
+    def _rank(self, t: Timestep, i: int, loc: Cell, candidates: list[Task]) -> list[Task]:
+        ranked = self.selector.rank(SelectionContext(t, i, loc, self.dist), candidates)
+        if not ranked:
+            raise ValueError(f"{self.selector!r} returned no task for agent {i} out of {len(candidates)}")
+        return ranked
 
     def _plan_task(self, t: Timestep, i: int, loc: Cell, task: Task) -> Decision | None:
         """Path1: current location -> pickup -> delivery, parking at the delivery.
