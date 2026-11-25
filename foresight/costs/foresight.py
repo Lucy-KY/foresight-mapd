@@ -147,8 +147,13 @@ class SpatioTemporalDirectionalCost(SpatioTemporalCost):
     a reverse move after t means the two agents are about to meet head-on,
     one before t means they just did.
 
-    ``delta_dir`` must be >= 1: a reverse move at exactly t is a swap
-    conflict, which TP already forbids. Normalizing by the window length
+    ``delta_dir`` must be >= 1 (a reverse move at exactly t is a swap
+    conflict, which TP already forbids), but the term only has an effect for
+    ``delta_dir >= 2``: a reverse move v -> u at t - 1 puts that agent at u at
+    time t, and one at t + 1 puts it at v at time t + 1, so both are vertex
+    conflicts with u -> v at t. Every move A* may actually take therefore has
+    c_opp = 0 when delta_dir = 1, and M5 plans exactly like M4
+    (``tests/test_consistency.py``; found in results/summary/sensitivity.md). Normalizing by the window length
     keeps c_opp in [0, 1] (at most one agent moves v -> u per timestep, or
     two would meet at u), on the same scale as rho, so ``mu`` means the same
     for every ``delta_dir``. As in M4, moves before ``t_now`` are history

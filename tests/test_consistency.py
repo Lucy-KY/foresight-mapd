@@ -87,3 +87,18 @@ def test_nonzero_weights_change_trajectories(make_model):
 def test_delta_zero_is_rejected():
     with pytest.raises(ValueError):
         SpatioTemporalCost(lam=1.0, delta=0)
+
+
+@pytest.mark.parametrize("case", CASES[1:3])
+def test_delta_dir_one_makes_m5_identical_to_m4(case):
+    """A reverse move within +-1 step of a move is always a vertex or swap
+    conflict, so c_opp is 0 on every move A* can take: delta_dir = 1 has no
+    effect however large mu is (see SpatioTemporalDirectionalCost)."""
+    def paths(model):
+        log = Simulator(instance(*case, 0), TokenPassing(), model).run()
+        assert log.completed
+        return [p.cells for p in log.paths]
+
+    m4 = paths(SpatioTemporalCost(lam=1.0, delta=2))
+    assert paths(SpatioTemporalDirectionalCost(lam=1.0, delta=2, mu=16.0, delta_dir=1)) == m4
+    assert paths(SpatioTemporalDirectionalCost(lam=1.0, delta=2, mu=16.0, delta_dir=2)) != m4  # control

@@ -1,0 +1,93 @@
+% Related Work -- owner: Yiyang Sun.  \input{related_work} from the main report;
+% citations are in references.bib.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Lifelong MAPD and decoupled planning.}
+Ma et al.~\cite{ma2017lifelong} formulate lifelong multi-agent pickup and
+delivery (MAPD) and propose Token Passing (TP) and its task-swapping variant
+TPTS. TP is a decoupled, prioritized scheme in the spirit of Cooperative
+A*~\cite{silver2005cooperative}: agents are planned one at a time with
+space-time A* against a shared record of the paths already committed by
+others, and a committed path is never revised. Within this scheme the record
+of other agents' paths acts only as a set of hard obstacles; the step cost
+remains the distance. Other work trades this simplicity for more coordination.
+Liu et al.~\cite{liu2019task} solve offline MAPD, with all tasks known in
+advance, by assigning task sequences via a special traveling-salesman problem
+before planning paths. Li et al.~\cite{li2021lifelong} propose Rolling-Horizon
+Collision Resolution (RHCR), which repeatedly solves windowed MAPF problems and
+replans all agents. Foresight stays inside TP: it keeps one-at-a-time planning
+and fixed paths and changes only the A* step cost. The cost therefore remains
+as cheap to compute as TP, and every difference between our methods (M0--M5)
+comes from that one term.
+
+\paragraph{Static traffic rules.}
+A common way to reduce congestion is to impose a direction of travel offline.
+Cohen et al.~\cite{cohen2015feasibility} add highways, sets of directed edges
+that bounded-suboptimal MAPF solvers are encouraged to follow; our M1 adapts
+this idea to TP by penalizing moves against a highway edge, a variant those
+authors list as future work. Zhang et al.~\cite{zhang2024guidance} optimize the
+edge weights of a ``guidance graph'' offline for a given map and show that the
+resulting guidance improves the throughput of several lifelong MAPF
+algorithms. Both are designed per map before execution and do not react to the
+traffic that actually occurs. Foresight's directional term (M5) aims at the same
+outcome, one-way flow in corridors, but derives it online from the committed
+paths, so the preferred direction can differ between corridors and change over
+time.
+
+\paragraph{Learned and history-based guidance.}
+Direction maps~\cite{jansen2008direction} learn from how agents have moved
+through the world and bias later agents to move with the prevailing direction,
+producing implicit cooperation. Like our heatmap baseline (M2), which penalizes
+cells in proportion to a decayed count of past visits, this guidance looks
+\emph{backward}: it summarizes traffic that has already happened. M2 exists to
+test whether looking \emph{forward}, at where committed agents will be, is
+better than looking backward at where agents have been.
+
+\paragraph{Congestion-aware guidance from planned routes.}
+The closest work is the traffic flow optimisation of Chen et
+al.~\cite{chen2024traffic}. They observe that lifelong MAPF planners route
+agents along free-flow shortest paths and so create congestion, and they
+compute \emph{guide paths} that avoid it. Guide paths are planned one agent at a
+time on a graph whose edge costs grow with the flow of guide paths already
+planned: a vertex-congestion term, and a contraflow term
+$c_e = f(v_1,v_2)\cdot f(v_2,v_1)$, the product of the numbers of guide paths
+crossing edge $e$ in each direction. The guide paths are then refined
+continually and followed softly by PIBT, which prefers neighbors close to the
+guide path. Foresight shares the idea of turning other agents' plans into a
+congestion cost, including a penalty on opposing traffic, but differs in four
+ways.
+\begin{enumerate}
+  \item \textbf{Time.} Their flows count \emph{time-independent} routes: a
+  guide path loads an edge regardless of when the agent will be on it. Our
+  congestion is read from collision-free \emph{space-time} paths and is
+  time-indexed: $\rho(v,t)$ counts reservations of $v$ only around the time the
+  planned agent would arrive (M4), and $c_{\mathrm{opp}}(u\to v,t)$ counts only
+  opposing moves close to the time of the move (M5). A corridor that is busy now
+  but empty when the agent gets there is not penalized.
+  \item \textbf{Where the cost acts.} Their congestion shapes a separate
+  guidance layer that is refined every timestep and that the underlying
+  solver may deviate from. Ours is the step cost of the same space-time A*
+  that produces the final path; it is evaluated once, when an agent is
+  planned, and no agent is ever replanned.
+  \item \textbf{Source of the forecast.} Their flows come from guide paths,
+  which are themselves an estimate of where agents will go. In TP the
+  committed paths are fixed, so the reservations they produce are an exact
+  record of where every agent will be until its path ends.
+  \item \textbf{Task assignment.} They assume an external task assigner.
+  We also study replacing TP's nearest-pickup rule with a congestion-aware
+  score $S_{ij}$, and separate the contribution of routing from that of
+  assignment in an ablation.
+\end{enumerate}
+Their method targets thousands of agents with PIBT, whereas we study the
+setting of TP with tens of agents; we therefore do not compare against it
+directly.
+
+\paragraph{Task assignment in MAPD.}
+TP assigns each requesting agent the open task whose pickup is nearest
+\cite{ma2017lifelong}, and TPTS lets an agent take over a task if it can reach
+the pickup sooner. Liu et al.~\cite{liu2019task} assign whole task sequences
+offline. These rules use distance only. Our $S_{ij}$ score adds the forecast
+congestion along the agent's route to the pickup and delivery, and the time a
+task has been waiting, to keep tasks from starving.

@@ -1,0 +1,19 @@
+# M5 stage 2 on warehouse_small.map (tuning seeds only; never report these runs).
+# Selection rule step 4 (results/summary/tune_foresight.md): M5's delta is fixed to
+# M4's chosen delta on this map (10, from tune_foresight_warehouse_small.toml), then
+# lam x mu is tuned with the same rule. TP comes from the stage-1 CSV.
+#
+#   python experiments/run.py experiments/configs/tune_foresight_std_stage2_warehouse_small.toml --out results/tune_foresight_std_stage2_warehouse_small.csv --jobs 10
+#   python experiments/select_tuning.py results/tune_foresight_warehouse_small.csv results/tune_foresight_std_stage2_warehouse_small.csv results/tune_foresight_narrow_corridor.csv
+
+map = "maps/warehouse_small.map"
+n_tasks = 500
+agents = [30]
+arrival_rates = [1, 5]
+seeds = [100, 101, 102, 103, 104]
+
+[methods.foresight_std]
+lam = [0.5, 1.0, 2.0, 4.0]
+delta = 10
+mu = [0.5, 1.0, 2.0, 4.0]
+delta_dir = 2
