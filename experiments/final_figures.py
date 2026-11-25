@@ -10,6 +10,9 @@ results/final_heavy_{map}.csv for both maps and writes
   assignment, heavier load) with mean change, wins and Wilcoxon p-values;
 - final_head_on.png: head-on encounters per task, M1-M5 vs TP;
 - final_ablation.png: mean and p95 service time, routing only vs + S_ij;
+- final_service_curve.png: mean service time vs number of agents, per map
+  and task frequency (main and heavy-load runs);
+- final_plan_time.png: planning time per timestep vs number of agents;
 - final_table.tex: the main results table for the report.
 
 Owner: member 1.
@@ -44,6 +47,12 @@ SHORT = {"service_time_mean": "service", "service_time_p95": "p95", "service_tim
          "wait_fraction": "wait", "head_on_per_task": "head-on", "plan_time_mean_ms": "ms/step"}
 # Slots 1 and 2 of the dataviz reference palette (also the deck's chart colours).
 BLUE, ORANGE, INK, MUTED = "#2a78d6", "#eb6834", "#1f2937", "#6b7280"
+# Curves: categorical slots 1-7 in fixed order (validated with the dataviz
+# validator; three slots are below 3:1 on white, so every line also gets its
+# own marker and the numbers are tabulated in final.md).
+CURVES = [("TP", "#2a78d6", "o"), ("M1 Highway", "#eb6834", "s"), ("M2 Heatmap", "#1baf7a", "^"),
+          ("M3", "#eda100", "v"), ("M4", "#e87ba4", "D"), ("M5", "#008300", "P"),
+          ("TP + S_ij", "#6250d6", "X")]
 
 
 def short_name(row: pd.Series) -> str:
@@ -167,6 +176,91 @@ def ablation_figure(both: dict[str, pd.DataFrame], out: Path) -> None:
     fig.savefig(out)
 
 
+def curve_data(both: dict[str, pd.DataFrame], heavy: dict[str, pd.DataFrame], metric: str) -> pd.DataFrame:
+    """Mean of ``metric`` per (map, method, rate, agents) over seeds."""
+    frames = []
+    for m in MAPS:
+        d = pd.concat([both[m], heavy[m]], ignore_index=True)
+        d = d[d["name"].isin([n for n, _, _ in CURVES])]
+        g = d.groupby(["name", "arrival_rate", "n_agents"])[metric].mean().reset_index()
+        g["map"] = m
+        frames.append(g)
+    return pd.concat(frames, ignore_index=True)
+
+
+def style(ax) -> None:
+    ax.tick_params(colors=INK, labelsize=8)
+    ax.grid(color="#e5e7eb", linewidth=0.6)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+
+
+def curve_legend(fig, y: float) -> None:
+    from matplotlib.lines import Line2D
+    handles = [Line2D([], [], color=c, marker=mk, markersize=5, linewidth=2, label=n) for n, c, mk in CURVES]
+    fig.legend(handles=handles, frameon=False, fontsize=7.5, ncol=len(handles), loc="upper left",
+               bbox_to_anchor=(0.01, y), handlelength=1.6, columnspacing=1.0)
+
+
+def service_curve_figure(data: pd.DataFrame, out: Path) -> None:
+    rates = sorted(data["arrival_rate"].unique())
+    fig = Figure(figsize=(7.0, 4.4), dpi=200)
+    axes = fig.subplots(len(MAPS), len(rates), sharex=True)
+    for i, m in enumerate(MAPS):
+        for j, rate in enumerate(rates):
+            ax = axes[i][j]
+            for name, color, marker in CURVES:
+                d = data[(data["map"] == m) & (data["name"] == name) & (data["arrival_rate"] == rate)]
+                ax.plot(d["n_agents"], d["service_time_mean"], color=color, marker=marker, markersize=4,
+                        linewidth=1.6, markeredgecolor="white", markeredgewidth=0.6)
+            ax.set_ylim(0, ax.get_ylim()[1] * 1.08)
+            ax.set_xticks([10, 30, 50, 80])
+            style(ax)
+            if i == 0:
+                ax.set_title(f"{rate:g} tasks / step", fontsize=8.5, color=INK)
+            if j == 0:
+                ax.set_ylabel(f"{MAP_LABEL[m]}\nmean service time", fontsize=8)
+            if i == len(MAPS) - 1:
+                ax.set_xlabel("agents", fontsize=8)
+    fig.text(0.02, 0.985, "Mean service time (timesteps), mean of 10 test seeds; "
+             "80 agents only at 1 and 5 tasks/step", fontsize=8.5, color=MUTED, ha="left", va="top")
+    curve_legend(fig, 0.955)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    fig.savefig(out)
+
+
+def plan_time_figure(data: pd.DataFrame, out: Path, rate: float = 5) -> None:
+    fig = Figure(figsize=(6.4, 2.9), dpi=200)
+    axes = fig.subplots(1, len(MAPS), sharey=True)
+    for ax, m in zip(axes, MAPS):
+        for name, color, marker in CURVES:
+            d = data[(data["map"] == m) & (data["name"] == name) & (data["arrival_rate"] == rate)]
+            ax.plot(d["n_agents"], d["plan_time_mean_ms"], color=color, marker=marker, markersize=4,
+                    linewidth=1.6, markeredgecolor="white", markeredgewidth=0.6)
+        ax.set_xticks([10, 30, 50, 80])
+        ax.set_ylim(bottom=0)
+        ax.set_title(MAP_LABEL[m], fontsize=8.5, color=INK)
+        ax.set_xlabel("agents", fontsize=8)
+        style(ax)
+    axes[0].set_ylabel("planning time\n(ms per timestep)", fontsize=8)
+    fig.text(0.02, 0.985, f"Planning time per timestep at {rate:g} tasks/step, mean of 10 test seeds",
+             fontsize=8.5, color=MUTED, ha="left", va="top")
+    curve_legend(fig, 0.94)
+    fig.tight_layout(rect=(0, 0, 1, 0.84))
+    fig.savefig(out)
+
+
+def curve_table(data: pd.DataFrame, m: str, metric: str, fmt: str) -> str:
+    d = data[data["map"] == m]
+    cols = sorted({(r, n) for r, n in zip(d["arrival_rate"], d["n_agents"])})
+    lines = ["| method | " + " | ".join(f"{n}a @ {r:g}" for r, n in cols) + " |", "|---|" + "---:|" * len(cols)]
+    for name, _, _ in CURVES:
+        e = d[d["name"] == name].set_index(["arrival_rate", "n_agents"])[metric]
+        lines.append(f"| {name} | " + " | ".join(fmt.format(e[c]) if c in e.index else "" for c in cols) + " |")
+    return "\n".join(lines)
+
+
 def latex_table(main: dict[str, pd.DataFrame], both: dict[str, pd.DataFrame]) -> str:
     metrics = ["service_time_mean", "service_time_p95", "head_on_per_task", "wait_fraction"]
     head = " & ".join(f"\\multicolumn{{2}}{{c}}{{{h}}}" for h in ["Service time", "p95 service", "Head-on / task", "Wait fraction"])
@@ -204,6 +298,8 @@ def main() -> None:
     both = {m: load([args.results / f"final_{m}.csv", args.results / f"final_assignment_{m}.csv"]) for m in MAPS}
     heavy = {m: load([args.results / f"final_heavy_{m}.csv"]) for m in MAPS}
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    service = curve_data(both, heavy, "service_time_mean")
+    plan = curve_data(both, heavy, "plan_time_mean_ms")
 
     md = ["# Final results", "",
           "Produced by `python experiments/final_figures.py`. Test seeds 0-9; 10, 30 and 50 agents at",
@@ -215,6 +311,8 @@ def main() -> None:
                "### Path costs vs TP", "", md_table(main_runs[m], ROUTING, "TP", TABLE_METRICS), "",
                "### Looking forward vs looking backward (vs tuned M2 Heatmap)", "",
                md_table(main_runs[m], ["M3", "M4", "M5"], "M2 Heatmap", TABLE_METRICS), "",
+               "### Direction term: M5 vs M4 (same rho, plus mu * c_opp)", "",
+               md_table(main_runs[m], ["M5"], "M4", TABLE_METRICS), "",
                "### Routing vs assignment (vs TP)", "",
                md_table(both[m], ["TP + S_ij", "M3", "M3 + S_ij", "M4", "M4 + S_ij", "M5", "M5 + S_ij"], "TP",
                         TABLE_METRICS), "",
@@ -226,12 +324,20 @@ def main() -> None:
         md += lines + ["", "### Heavier load: 80 agents at 1 and 5 tasks/step (20 pairs)", "",
                        reference_line(heavy[m]), "",
                        md_table(heavy[m], ROUTING, "TP", TABLE_METRICS), "",
-                       md_table(heavy[m], ["M3", "M4", "M5"], "M2 Heatmap", TABLE_METRICS), ""]
+                       md_table(heavy[m], ["M3", "M4", "M5"], "M2 Heatmap", TABLE_METRICS), "",
+                       md_table(heavy[m], ["M5"], "M4", TABLE_METRICS), ""]
+        md += ["### Mean service time by agents and frequency (table view of final_service_curve.png)", "",
+               curve_table(service, m, "service_time_mean", "{:.1f}"), "",
+               "### Planning time, ms per timestep (table view of final_plan_time.png)", "",
+               curve_table(plan, m, "plan_time_mean_ms", "{:.2f}"), ""]
     Path(f"{args.out}.md").write_text("\n".join(md))
     head_on_figure(main_runs, Path(f"{args.out}_head_on.png"))
     ablation_figure(both, Path(f"{args.out}_ablation.png"))
+    service_curve_figure(service, Path(f"{args.out}_service_curve.png"))
+    plan_time_figure(plan, Path(f"{args.out}_plan_time.png"))
     Path(f"{args.out}_table.tex").write_text(latex_table(main_runs, both))
-    print(f"wrote {args.out}.md, {args.out}_head_on.png, {args.out}_ablation.png, {args.out}_table.tex")
+    print(f"wrote {args.out}.md, {args.out}_table.tex and the figures "
+          f"{args.out}_{{head_on,ablation,service_curve,plan_time}}.png")
 
 
 if __name__ == "__main__":
